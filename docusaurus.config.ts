@@ -35,7 +35,7 @@ const config: Config = {
     {
       tagName: 'script',
       attributes: {},
-      innerHTML: `(function(){function inject(){var toc=document.querySelector(".theme-doc-toc-desktop");if(!toc||!toc.parentElement||toc.parentElement.querySelector(".rail__links"))return;var d=document.createElement("div");d.className="rail__links";d.innerHTML='<a href="https://github.com/Sanmo-Labs/rumpty-docs">Edit this page ↗</a><a href="https://github.com/Sanmo-Labs/rumpty-docs/issues">Report an issue ↗</a>';toc.insertAdjacentElement("afterend",d)}var obs=new MutationObserver(inject);function start(){inject();obs.observe(document.documentElement,{childList:true,subtree:true})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()})();`,
+      innerHTML: `(function(){function inject(){var toc=document.querySelector(".theme-doc-toc-desktop");if(!toc||!toc.parentElement||toc.parentElement.querySelector(".rail__links"))return;var d=document.createElement("div");d.className="rail__links";d.innerHTML='<a href="https://github.com/cloverworks-hq/rumpty-docs">Edit this page ↗</a><a href="https://github.com/cloverworks-hq/rumpty-docs/issues">Report an issue ↗</a>';toc.insertAdjacentElement("afterend",d)}var obs=new MutationObserver(inject);function start(){inject();obs.observe(document.documentElement,{childList:true,subtree:true})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start()})();`,
     },
     {
       tagName: 'link',
@@ -66,7 +66,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
-          // editUrl: 'https://github.com/Sanmo-Labs/rumpty-docs/tree/main/',
+          // editUrl: 'https://github.com/cloverworks-hq/rumpty-docs/tree/main/',
         },
         blog: false,
         theme: { customCss: ['./src/css/custom.css', './src/css/docs-home.css', './src/css/docs-article.css', './src/css/api-reference.css'] },
@@ -117,7 +117,7 @@ const config: Config = {
           items: [
             {label: 'Status', href: 'https://status.rumptycloud.com'},
             {label: 'Discord', href: 'https://discord.gg/Rukmqzg3uX'},
-            {label: 'GitHub', href: 'https://github.com/Sanmo-Labs'},
+            {label: 'GitHub', href: 'https://github.com/cloverworks-hq'},
             {label: 'YouTube', href: 'https://www.youtube.com/channel/UCp7tjsn-Fb7oAUngUIdGq5Q'},
             {label: 'Blog', href: 'https://blog.rumptycloud.com'},
           ],

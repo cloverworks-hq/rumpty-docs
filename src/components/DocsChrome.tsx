@@ -91,7 +91,7 @@ export default function DocsChrome({children}: {children: ReactNode}) {
           <nav className="dfoot__links" aria-label="Footer">
             <Link href="https://status.rumptycloud.com">Status</Link>
             <Link href="https://discord.gg/Rukmqzg3uX">Discord</Link>
-            <Link href="https://github.com/Sanmo-Labs">GitHub</Link>
+            <Link href="https://github.com/cloverworks-hq">GitHub</Link>
             <Link href="https://www.youtube.com/channel/UCp7tjsn-Fb7oAUngUIdGq5Q">YouTube</Link>
             <Link href="https://blog.rumptycloud.com">Blog</Link>
           </nav>

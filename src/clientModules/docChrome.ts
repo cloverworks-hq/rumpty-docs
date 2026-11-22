@@ -29,8 +29,8 @@ function injectRail() {
   const links = document.createElement('div');
   links.className = 'rail__links';
   links.innerHTML =
-    '<a href="https://github.com/Sanmo-Labs/rumpty-docs">Edit this page ↗</a>' +
-    '<a href="https://github.com/Sanmo-Labs/rumpty-docs/issues">Report an issue ↗</a>';
+    '<a href="https://github.com/cloverworks-hq/rumpty-docs">Edit this page ↗</a>' +
+    '<a href="https://github.com/cloverworks-hq/rumpty-docs/issues">Report an issue ↗</a>';
   toc.insertAdjacentElement('afterend', links);
 }
 
