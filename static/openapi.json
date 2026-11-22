@@ -1109,6 +1109,7 @@
           "name",
           "prefix",
           "scopes",
+          "permissions",
           "created_at"
         ],
         "properties": {
@@ -1134,6 +1135,27 @@
               ]
             },
             "description": "What the key can be used for."
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "workspace.read",
+                "resource.write",
+                "runtime.connect",
+                "secrets.read",
+                "secrets.manage",
+                "members.manage",
+                "audit.read",
+                "billing.read",
+                "billing.manage",
+                "workspace.manage",
+                "workspace.transfer",
+                "workspace.delete"
+              ]
+            },
+            "description": "Permissions the key may use. A request also needs your role in that workspace to grant\nthe same permission. A key with no stored list uses the default set.\n"
           },
           "never_expires": {
             "type": "boolean",
@@ -2904,7 +2926,7 @@
           },
           "display_status": {
             "type": "string",
-            "description": "Status to show to people. Same as `status`, except `updating` while a live deployment's latest run is queued or building. Only computed by list and get; elsewhere equal to `status`.",
+            "description": "Status to show to people. Same as `status`, except `updating` while a live deployment's next version is still building, and `starting` once that build has an image and the app is coming up. Only computed by list and get; elsewhere equal to `status`.",
             "example": "active"
           },
           "plan_slug": {
@@ -8321,12 +8343,12 @@
     {
       "name": "Workspaces",
       "x-slug": "workspaces",
-      "description": "Workspaces group resources and the people who can manage them. Every VM, snapshot and SSH key\nlives in a workspace, and most endpoints act on the workspace named in the `X-Workspace-Slug`\nheader.\n\n**Roles.** Each member has one role:\n\n| Role | Can |\n|---|---|\n| `owner` | Everything, including billing and deleting the workspace. Each workspace has exactly one owner, the person who created it. |\n| `admin` | Manage resources, settings, members and invitations, read the audit log, and delete SSH keys other members added to the workspace. Cannot invite or promote other admins, or change or remove another admin. |\n| `developer` | Create, change and delete resources, connect to them, and manage secrets and their own SSH keys. |\n| `viewer` | Read-only access to the workspace's resources. |\n\n**Workspace UID and slug.** Routes under `/v1/workspaces/{workspace_uid}/...` (notifications,\nsettings, members and invitations) need both the workspace's `uid` in the path and its slug in\n`X-Workspace-Slug`. They must name the same workspace, otherwise the request fails with `403`\n(`workspace not found or access denied`). Listing, creating and deleting workspaces, and the\n`/v1/workspace-invitations/{token}` routes, do not use the header.\n"
+      "description": "Workspaces group resources and the people who can manage them. Every VM, snapshot and SSH key\nlives in a workspace, and most endpoints act on the workspace named in the `X-Workspace-Slug`\nheader.\n\n**Roles.** Each member has one role:\n\n| Role | Can |\n|---|---|\n| `owner` | Everything, including billing and deleting the workspace. Each workspace has exactly one owner, the person who created it. |\n| `admin` | Manage resources, settings, members and invitations, read the audit log, and delete SSH keys other members added to the workspace. Cannot invite or promote other admins, or change or remove another admin. |\n| `developer` | Create, change and delete resources, connect to them, and manage secrets and their own SSH keys. |\n| `viewer` | Read-only access to the workspace's resources. |\n\n**API keys.** A personal API key is also limited to the `permissions` on that key. The role and\nthe key both have to allow an action. Keys created without a permission list, including keys\ncreated before permissions existed, can read and change resources, connect to them, and manage\nsecrets. They cannot manage billing, members, audit, or delete the workspace unless you grant\nthose permissions when you create the key.\n\n**Workspace UID and slug.** Routes under `/v1/workspaces/{workspace_uid}/...` (notifications,\nsettings, members and invitations) need both the workspace's `uid` in the path and its slug in\n`X-Workspace-Slug`. They must name the same workspace, otherwise the request fails with `403`\n(`workspace not found or access denied`). Listing, creating and deleting workspaces, and the\n`/v1/workspace-invitations/{token}` routes, do not use the header.\n"
     },
     {
       "name": "API Keys",
       "x-slug": "api-keys",
-      "description": "Personal API keys authenticate the CLI, the Rumpty MCP and your own automation. Keys belong to\nyou, not to a workspace, and inherit your role in each workspace you access.\n"
+      "description": "Personal API keys authenticate the CLI, the Rumpty MCP and your own automation. Keys belong to\nyou, not to a workspace. A key can only do what its `permissions` allow, and only where your\nrole already allows it. Omitting `permissions` grants the default set: `workspace.read`,\n`resource.write`, `runtime.connect`, `secrets.read` and `secrets.manage`.\n\nA key cannot change your password, second factor, profile or payment cards, mint or revoke\nkeys, use the admin API, or accept a workspace invitation. Those actions require a signed-in\nsession. See [API keys](/settings/api-keys) for the full permission list.\n"
     },
     {
       "name": "SSH Keys",
@@ -10805,6 +10827,27 @@
                     ],
                     "default": "cli",
                     "description": "What the key is for. `cli` covers the CLI and REST API. `mcp` is for the Rumpty MCP server."
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "workspace.read",
+                        "resource.write",
+                        "runtime.connect",
+                        "secrets.read",
+                        "secrets.manage",
+                        "members.manage",
+                        "audit.read",
+                        "billing.read",
+                        "billing.manage",
+                        "workspace.manage",
+                        "workspace.transfer",
+                        "workspace.delete"
+                      ]
+                    },
+                    "description": "Permissions this key may use, capped by your role in each workspace. Omit it to\ngrant the default set (`workspace.read`, `resource.write`, `runtime.connect`,\n`secrets.read`, `secrets.manage`). Keys that already exist keep that same default\nuntil you replace them.\n"
                   }
                 }
               },
@@ -10863,6 +10906,13 @@
                     "scopes": [
                       "cli"
                     ],
+                    "permissions": [
+                      "workspace.read",
+                      "resource.write",
+                      "runtime.connect",
+                      "secrets.read",
+                      "secrets.manage"
+                    ],
                     "expires_at": "2027-02-16T10:24:00Z",
                     "created_at": "2026-11-18T10:24:00Z",
                     "token": "rumpty_3f9a1c2e_9b8d7c6e5f4a3b2c1d0e9f8a7b6c5d4e"
@@ -10872,7 +10922,7 @@
             }
           },
           "400": {
-            "description": "Validation failed: `name` is missing or already used, `scope` is not `cli` or `mcp`, or both `never_expires` and `expires_in_days` were sent.",
+            "description": "Validation failed: `name` is missing or already used, `scope` is not `cli` or `mcp`, `permissions` contains an unknown value, or both `never_expires` and `expires_in_days` were sent.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10937,6 +10987,13 @@
                       "prefix": "3f9a1c2e",
                       "scopes": [
                         "cli"
+                      ],
+                      "permissions": [
+                        "workspace.read",
+                        "resource.write",
+                        "runtime.connect",
+                        "secrets.read",
+                        "secrets.manage"
                       ],
                       "expires_at": "2027-02-16T10:24:00Z",
                       "created_at": "2026-11-18T10:24:00Z",
@@ -15922,7 +15979,7 @@
         "operationId": "listDeployments",
         "summary": "List deployments",
         "x-slug": "list-deployments",
-        "description": "Returns the workspace's deployments, newest first. Deleted deployments, pull request\npreviews and the component deployments of one-click [apps](/api/apps/list-apps) are not\nincluded. Each item carries the status of its latest run in `last_run_status`, and\n`display_status` shows `updating` while a new version builds for a live app.\n\nWithout query parameters, every deployment is returned in `data`. Send `page` or\n`page_size` to paginate. A top-level `pagination` object is then added next to `data`, and\n`q` filters the results. `q` is ignored unless `page` or `page_size` is present.\n",
+        "description": "Returns the workspace's deployments, newest first. Deleted deployments, pull request\npreviews and the component deployments of one-click [apps](/api/apps/list-apps) are not\nincluded. Each item carries the status of its latest run in `last_run_status`, and\n`display_status` shows `updating` while a new version builds for a live app, and `starting` once that build has an image.\n\nWithout query parameters, every deployment is returned in `data`. Send `page` or\n`page_size` to paginate. A top-level `pagination` object is then added next to `data`, and\n`q` filters the results. `q` is ignored unless `page` or `page_size` is present.\n",
         "tags": [
           "Deployments"
         ],

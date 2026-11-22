@@ -30,9 +30,12 @@ curl https://api.rumptycloud.com/v1/vms \
   -H "X-Workspace-Slug: acme"
 ```
 
-API keys look like `rumpty_<prefix>_<secret>`. A key acts as you, with your role in each workspace, so
-keep it secret and never commit it. Create keys in the console under
+API keys look like `rumpty_<prefix>_<secret>`. A key acts as you only for the permissions granted
+on that key, and only where your role in the workspace already allows the action. A key created
+without a permission list can manage resources and secrets. It cannot change billing, members, or
+the account. Keep it secret and never commit it. Create keys in the console under
 **Manage Profile → My profile → Personal API keys**, or with [Create an API key](/api/api-keys/create-an-api-key).
+The permission list is on [API keys](/settings/api-keys).
 
 ## Workspaces
 

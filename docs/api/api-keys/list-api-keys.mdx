@@ -72,6 +72,13 @@ What the key can be used for.
 
 </Param>
 
+<Param name={"permissions"} type={"array of strings"} required enumValues={["workspace.read","resource.write","runtime.connect","secrets.read","secrets.manage","members.manage","audit.read","billing.read","billing.manage","workspace.manage","workspace.transfer","workspace.delete"]}>
+
+Permissions the key may use. A request also needs your role in that workspace to grant
+the same permission. A key with no stored list uses the default set.
+
+</Param>
+
 <Param name={"never_expires"} type={"boolean"}>
 
 Present and `true` when the key has no expiry.
@@ -170,6 +177,13 @@ result = response.json()
       "prefix": "3f9a1c2e",
       "scopes": [
         "cli"
+      ],
+      "permissions": [
+        "workspace.read",
+        "resource.write",
+        "runtime.connect",
+        "secrets.read",
+        "secrets.manage"
       ],
       "expires_at": "2027-02-16T10:24:00Z",
       "created_at": "2026-11-18T10:24:00Z",

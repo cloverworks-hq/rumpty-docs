@@ -22,6 +22,12 @@ header.
 | `developer` | Create, change and delete resources, connect to them, and manage secrets and their own SSH keys. |
 | `viewer` | Read-only access to the workspace's resources. |
 
+**API keys.** A personal API key is also limited to the `permissions` on that key. The role and
+the key both have to allow an action. Keys created without a permission list, including keys
+created before permissions existed, can read and change resources, connect to them, and manage
+secrets. They cannot manage billing, members, audit, or delete the workspace unless you grant
+those permissions when you create the key.
+
 **Workspace UID and slug.** Routes under `/v1/workspaces/{workspace_uid}/...` (notifications,
 settings, members and invitations) need both the workspace's `uid` in the path and its slug in
 `X-Workspace-Slug`. They must name the same workspace, otherwise the request fails with `403`

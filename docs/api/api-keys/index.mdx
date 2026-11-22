@@ -10,7 +10,13 @@ custom_edit_url: null
 import {MethodBadge} from '@site/src/components/ApiReference';
 
 Personal API keys authenticate the CLI, the Rumpty MCP and your own automation. Keys belong to
-you, not to a workspace, and inherit your role in each workspace you access.
+you, not to a workspace. A key can only do what its `permissions` allow, and only where your
+role already allows it. Omitting `permissions` grants the default set: `workspace.read`,
+`resource.write`, `runtime.connect`, `secrets.read` and `secrets.manage`.
+
+A key cannot change your password, second factor, profile or payment cards, mint or revoke
+keys, use the admin API, or accept a workspace invitation. Those actions require a signed-in
+session. See [API keys](/settings/api-keys) for the full permission list.
 
 ## Endpoints
 

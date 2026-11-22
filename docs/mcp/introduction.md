@@ -31,7 +31,7 @@ Rumpty MCP lets AI agents manage your account. Connect Cursor, Claude Code, VS C
 
 Create a personal API key under **Manage Profile → My profile → Personal API keys**. See [API keys](/settings/api-keys).
 
-The agent acts as you: in each workspace it has exactly your role, so a viewer key can read but not change anything. Give the key a clear name such as `Cursor MCP` so you can spot it in [audit logs](/audit-logs/introduction), and revoke it to cut the agent off.
+The agent uses that key. In each workspace it can do only what the key's permissions and your role both allow. A key created in the console can manage resources and secrets, and cannot change billing, members, or your account. A viewer still cannot change anything. Give the key a clear name such as `Cursor MCP` so you can spot it in [audit logs](/audit-logs/introduction), and revoke it to cut the agent off.
 
 ## Connect your client
 
