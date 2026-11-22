@@ -14,8 +14,8 @@ export default function DocItemTOCDesktop(): ReactNode {
         className={ThemeClassNames.docs.docTocDesktop}
       />
       <div className="rail__links">
-        <a href="https://github.com/Sanmo-Labs/rumpty-docs">Edit this page ↗</a>
-        <a href="https://github.com/Sanmo-Labs/rumpty-docs/issues">Report an issue ↗</a>
+        <a href="https://github.com/cloverworks-hq/rumpty-docs">Edit this page ↗</a>
+        <a href="https://github.com/cloverworks-hq/rumpty-docs/issues">Report an issue ↗</a>
       </div>
     </>
   );

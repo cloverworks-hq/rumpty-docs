@@ -153,7 +153,7 @@ export default function Home(): ReactNode {
             <Link href="/billing/introduction">Billing <span className="arr">→</span></Link>
             <Link href="/audit-logs/introduction">Audit logs <span className="arr">→</span></Link>
             <Link href="https://blog.rumptycloud.com">Changelog <span className="arr">→</span></Link>
-            <Link href="https://github.com/Sanmo-Labs/rumpty-docs">Contribute to docs <span className="arr">→</span></Link>
+            <Link href="https://github.com/cloverworks-hq/rumpty-docs">Contribute to docs <span className="arr">→</span></Link>
           </nav>
         </div>
       </section>
