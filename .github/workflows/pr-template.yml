@@ -1,0 +1,54 @@
+name: PR description
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  template:
+    name: Follows the PR template
+    if: ${{ !endsWith(github.event.pull_request.user.login, '[bot]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check the description
+        shell: python
+        run: |
+          import json, os, re, sys
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as f:
+              body = json.load(f)["pull_request"].get("body") or ""
+          body = re.sub(r"<!--.*?-->", "", body, flags=re.S).replace("\r\n", "\n")
+
+          def section(title):
+              m = re.search(rf"^##\s+{re.escape(title)}\s*$(.*?)(?=^##\s|\Z)", body, flags=re.M | re.S | re.I)
+              return None if m is None else m.group(1).strip()
+
+          def require(title, minimum, hint):
+              text = section(title)
+              if text is None:
+                  errors.append(f"Add the '## {title}' section from the PR template.")
+              elif len(text) < minimum:
+                  errors.append(hint)
+
+          errors = []
+          require("Summary", 20, "Describe what changes for readers, and why, under '## Summary'.")
+
+          kinds = {"new-page", "update", "fix", "restructure", "api"}
+          found = re.findall(r"^\s*/kind\s+(\S+)\s*$", body, flags=re.M)
+          if not found:
+              errors.append("Add at least one '/kind <type>' line under '## Type of change', e.g. /kind update.")
+          for k in found:
+              if k not in kinds:
+                  errors.append(f"Unknown /kind '{k}'. Use one of: {', '.join(sorted(kinds))}.")
+
+          require("Pages", 3, "List the pages you added or changed under '## Pages'.")
+          require("Related change", 3, "Link the product change this documents under '## Related change', or write N/A.")
+          require("How was this checked?", 8, "Say how you checked the change under '## How was this checked?'.")
+
+          for e in errors:
+              print(f"::error::{e}")
+          sys.exit(1 if errors else 0)
