@@ -190,9 +190,9 @@ export default function Home(): ReactNode {
           </div>
         </div>
         <div className="helpers">
-          <Link className="helper" href="https://discord.gg/Rukmqzg3uX"><span className="helper__title">Ask the community</span><span className="helper__desc">The team and other builders answer questions in Discord.</span><span className="helper__cta">Join Discord ↗</span></Link>
+          <Link className="helper" href="https://discord.gg/BnFdQrMBhC"><span className="helper__title">Ask the community</span><span className="helper__desc">The team and other builders answer questions in Discord.</span><span className="helper__cta">Join Discord ↗</span></Link>
           <Link className="helper" href="https://status.rumptycloud.com"><span className="helper__title">Is it us or you?</span><span className="helper__desc">Check live platform status before you start debugging.</span><span className="helper__cta">Status page ↗</span></Link>
-          <Link className="helper" href="https://discord.gg/Rukmqzg3uX"><span className="helper__title">Still stuck?</span><span className="helper__desc">Open a ticket and a person on the team will get back to you.</span><span className="helper__cta">Contact support ↗</span></Link>
+          <Link className="helper" href="https://discord.gg/BnFdQrMBhC"><span className="helper__title">Still stuck?</span><span className="helper__desc">Open a ticket and a person on the team will get back to you.</span><span className="helper__cta">Contact support ↗</span></Link>
         </div>
       </section>
     </div>
