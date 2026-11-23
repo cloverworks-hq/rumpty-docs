@@ -51,8 +51,8 @@ export default function DocsChrome({children}: {children: ReactNode}) {
             </Link>
           </div>
           <nav className="dnav__actions" aria-label="Search, help and theme">
-            <Link className="dnav__ghost" href="https://discord.gg/Rukmqzg3uX">Community</Link>
-            <Link className="dnav__ghost" href="https://discord.gg/Rukmqzg3uX">Support</Link>
+            <Link className="dnav__ghost" href="https://discord.gg/BnFdQrMBhC">Community</Link>
+            <Link className="dnav__ghost" href="https://discord.gg/BnFdQrMBhC">Support</Link>
             <Link className="dnav__ghost" href="https://status.rumptycloud.com">Status</Link>
             <ThemeToggle />
             <Link className="btn btn--primary" href="https://console.rumptycloud.com"><span>Open console</span><span aria-hidden="true">↗</span></Link>
@@ -68,8 +68,8 @@ export default function DocsChrome({children}: {children: ReactNode}) {
         <div className="dnav__panel" id="menu" hidden={!menuOpen}>
           <div className="dwrap">
             <nav aria-label="Help, mobile">
-              <Link href="https://discord.gg/Rukmqzg3uX">Community</Link>
-              <Link href="https://discord.gg/Rukmqzg3uX">Support</Link>
+              <Link href="https://discord.gg/BnFdQrMBhC">Community</Link>
+              <Link href="https://discord.gg/BnFdQrMBhC">Support</Link>
               <Link href="https://status.rumptycloud.com">Status</Link>
             </nav>
             <Link className="btn btn--primary btn--block" href="https://console.rumptycloud.com"><span>Open console</span><span aria-hidden="true">↗</span></Link>
@@ -90,7 +90,7 @@ export default function DocsChrome({children}: {children: ReactNode}) {
           <p className="dfoot__brand"><img src="/docs-design/icons/logo-mark.svg" width="20" height="20" alt="" />© {new Date().getFullYear()} RumptyCloud</p>
           <nav className="dfoot__links" aria-label="Footer">
             <Link href="https://status.rumptycloud.com">Status</Link>
-            <Link href="https://discord.gg/Rukmqzg3uX">Discord</Link>
+            <Link href="https://discord.gg/BnFdQrMBhC">Discord</Link>
             <Link href="https://github.com/cloverworks-hq">GitHub</Link>
             <Link href="https://www.youtube.com/channel/UCp7tjsn-Fb7oAUngUIdGq5Q">YouTube</Link>
             <Link href="https://blog.rumptycloud.com">Blog</Link>
