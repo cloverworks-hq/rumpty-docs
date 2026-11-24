@@ -146,6 +146,7 @@ const sidebars: SidebarsConfig = {
             'cli/vm',
             'cli/expose',
             'cli/sync',
+            'cli/mcp',
           ],
         },
       ],
