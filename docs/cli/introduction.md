@@ -82,6 +82,7 @@ These flags work with any command:
 | [`unexpose`](./expose#remove-an-exposed-service) | Remove a VM service public URL |
 | [`vm`](./vm) | Manage workspace VMs: `ls`, `start`, `stop`, `reboot`, `delete`, `expose ls` |
 | [`workspaces`](./workspaces) | List workspaces you can access |
+| [`mcp`](./mcp) | Show how to connect an AI client to Rumpty MCP |
 | `completion` | Generate shell autocompletion script |
 
 Use `rumpty [command] --help` for details on any command.

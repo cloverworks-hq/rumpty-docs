@@ -4,7 +4,7 @@ title: "Rumpty MCP: Connect Cursor, Claude Code & VS Code"
 sidebar_label: Rumpty MCP
 image: /img/og-mcp.jpg
 slug: /mcp
-description: Connect Cursor, Claude Code, VS Code or any MCP client to RumptyCloud. AI agents get over 100 tools to deploy apps, read logs, and manage VMs, databases, buckets, firewalls and billing.
+description: Connect Cursor, Claude Code, VS Code, Codex, Zed or any MCP client to RumptyCloud. AI agents get over 100 tools to deploy apps, read logs, and manage VMs, databases, buckets, firewalls and billing.
 keywords:
   - Rumpty MCP
   - RumptyCloud MCP
@@ -29,11 +29,45 @@ Rumpty MCP lets AI agents manage your account. Connect Cursor, Claude Code, VS C
 
 ## Before you start
 
-Create a personal API key under **Manage Profile → My profile → Personal API keys**. See [API keys](/settings/api-keys).
+Create a personal API key under **Manage Profile → My profile → Personal API keys**. See [API keys](/settings/api-keys). Then put it in an environment variable so client configs can refer to it instead of holding the key:
 
-The agent uses that key. In each workspace it can do only what the key's permissions and your role both allow. A key created in the console can manage resources and secrets, and cannot change billing, members, or your account. A viewer still cannot change anything. Give the key a clear name such as `Cursor MCP` so you can spot it in [audit logs](/audit-logs/introduction), and revoke it to cut the agent off.
+```bash
+export RUMPTY_API_KEY=rumpty_...
+```
+
+The agent uses that key. In each workspace it can do only what the key's permissions and your role both allow, and the server only lists the tools the key's permissions cover. A key created in the console with the default permissions can manage resources and secrets, and cannot see billing, members or audit logs. A viewer still cannot change anything. Give the key a clear name such as `Cursor MCP` so you can spot it in [audit logs](/audit-logs/introduction), and revoke it to cut the agent off.
+
+:::tip
+With the [Rumpty CLI](/cli/introduction) v0.2.0 or later, `rumpty mcp` prints the server details and `rumpty mcp <client>` prints the setup below for one client. It never prints your key.
+:::
 
 ## Connect your client
+
+### Claude Code
+
+Add to `.mcp.json` in your project. Claude Code fills in `${RUMPTY_API_KEY}` when it starts:
+
+```json
+{
+  "mcpServers": {
+    "rumpty": {
+      "type": "http",
+      "url": "https://mcp.rumptycloud.com/mcp",
+      "headers": { "Authorization": "Bearer ${RUMPTY_API_KEY}" }
+    }
+  }
+}
+```
+
+Or add it for every project. Run this where `RUMPTY_API_KEY` is set; your shell fills in the key, so it is saved in Claude Code's config:
+
+```bash
+claude mcp add --transport http --scope user rumpty \
+  https://mcp.rumptycloud.com/mcp \
+  --header "Authorization: Bearer $RUMPTY_API_KEY"
+```
+
+Run `claude mcp list` to confirm it connected.
 
 ### Cursor
 
@@ -44,46 +78,101 @@ Add the server to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one
   "mcpServers": {
     "rumpty": {
       "url": "https://mcp.rumptycloud.com/mcp",
-      "headers": { "Authorization": "Bearer rumpty_..." }
+      "headers": { "Authorization": "Bearer ${env:RUMPTY_API_KEY}" }
     }
   }
 }
 ```
 
-Restart Cursor or toggle the server under **Settings → MCP**. Rumpty MCP appears with its tools listed.
-
-### Claude Code
-
-```bash
-claude mcp add --transport http rumpty \
-  https://mcp.rumptycloud.com/mcp \
-  --header "Authorization: Bearer rumpty_..."
-```
-
-Run `claude mcp list` to confirm it connected.
+Cursor reads `RUMPTY_API_KEY` from the environment it was started in. If you open Cursor from the dock, start it from a terminal instead or set the variable where desktop apps see it. Check **Output → MCP Logs** to confirm the tools loaded.
 
 ### VS Code
 
-Add the server to `.vscode/mcp.json` in your project:
+Add the server to `.vscode/mcp.json` in your project. VS Code asks for the key once and stores it securely:
 
 ```json
 {
+  "inputs": [
+    { "type": "promptString", "id": "rumpty-key", "description": "RumptyCloud API key", "password": true }
+  ],
   "servers": {
     "rumpty": {
       "type": "http",
       "url": "https://mcp.rumptycloud.com/mcp",
-      "headers": { "Authorization": "Bearer rumpty_..." }
+      "headers": { "Authorization": "Bearer ${input:rumpty-key}" }
     }
   }
 }
 ```
+
+Run **MCP: List Servers** from the command palette and start `rumpty`.
+
+### OpenAI Codex CLI
+
+```bash
+codex mcp add rumpty --url https://mcp.rumptycloud.com/mcp --bearer-token-env-var RUMPTY_API_KEY
+```
+
+Or in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.rumpty]
+url = "https://mcp.rumptycloud.com/mcp"
+bearer_token_env_var = "RUMPTY_API_KEY"
+```
+
+Run `codex mcp list` to confirm.
+
+### Gemini CLI
+
+Run this where `RUMPTY_API_KEY` is set; your shell fills in the key, so it is saved in Gemini's `settings.json`:
+
+```bash
+gemini mcp add --scope user --transport http \
+  --header "Authorization: Bearer $RUMPTY_API_KEY" rumpty https://mcp.rumptycloud.com/mcp
+```
+
+Run `gemini mcp list` to confirm.
+
+### Zed
+
+Zed does not read environment variables here, so paste the key itself. Add to `settings.json`:
+
+```json
+"context_servers": {
+  "rumpty": {
+    "url": "https://mcp.rumptycloud.com/mcp",
+    "headers": { "Authorization": "Bearer rumpty_..." }
+  }
+}
+```
+
+The dot next to `rumpty` under **Settings → AI → MCP Servers** turns green when it is connected.
+
+### Claude Desktop
+
+Claude Desktop reaches remote servers with custom headers through [`mcp-remote`](https://github.com/geelen/mcp-remote), which needs Node.js. Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "rumpty": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.rumptycloud.com/mcp", "--header", "Authorization:${AUTH_HEADER}"],
+      "env": { "AUTH_HEADER": "Bearer rumpty_..." }
+    }
+  }
+}
+```
+
+Keep `Authorization:${AUTH_HEADER}` without spaces and put the key in `env`. Restart Claude Desktop.
 
 ### Other clients
 
 Any client that can reach a remote HTTP MCP server and send a custom header works. Use the server URL above and send your API key in the `Authorization` header as `Bearer <key>`.
 
 :::warning
-Your API key grants full access to everything your role allows. Keep config files that contain it out of version control, or use your client's support for environment variables or secret inputs where it has one.
+Your API key can do everything its permissions and your role allow. Keep config files that contain it out of version control, and prefer the environment variable or secret input forms above.
 :::
 
 ## Check that it works
@@ -93,14 +182,14 @@ Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspa
 ## Safety
 
 - **Agents confirm first.** The server tells agents that creating, changing or deleting resources acts on real, billed infrastructure, and to confirm with you before doing so.
-- **Deletes need the name typed back.** Permanent deletes (deployments, VMs, volumes, snapshots, firewall policies, SSH keys) require the resource's name as confirmed by you. Removing a card requires its last four digits.
+- **Deletes need the name typed back.** Permanent deletes (deployments, VMs, volumes, snapshots, firewall policies, SSH keys) require the resource's name as confirmed by you.
 - **Database access is read-only.** `run_database_query` runs one read-only SQL statement on PostgreSQL or MySQL, or one read-only Redis command.
-- **No silent charges.** `top_up_wallet` and `add_payment_card` return a checkout link that you open and pay yourself.
+- **Payments stay with you.** Topping up the wallet, adding or removing cards, settling a balance and redeeming promo codes are not available to API keys, so an agent cannot start a payment.
 - **Everything is audited.** Every change the agent makes shows up in [audit logs](/audit-logs/introduction) under your name.
 
 ## Tools
 
-The server has 106 tools.
+The server has 106 tools. It lists only those your key's permissions cover, so an agent never tries a tool the key can't use. A key with the default permissions doesn't see the billing tools, `get_inference_usage`, `list_audit_logs` or `list_workspace_members`: those need `billing.read`, `audit.read` and `members.manage`. The payment tools (`top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `redeem_promo_code`) never appear for an API key.
 
 | Area | Tools |
 |------|-------|
@@ -129,7 +218,7 @@ The server has 106 tools.
 - "Create a free Postgres database, connect it to my api deployment, and redeploy."
 - "Spin up a small VM, expose port 3000 and give me the URL."
 - "Only allow 203.0.113.10 to reach my database."
-- "What did I spend this month, and on what?"
+- "What did I spend this month, and on what?" (needs a key with `billing.read`)
 
 ## Troubleshooting
 
@@ -137,4 +226,5 @@ The server has 106 tools.
 |---------|-----|
 | `401 Unauthorized` | The key is wrong, expired or revoked. Create a new one and check the header reads `Bearer <key>`. |
 | The agent can read but not change things | Your role in that workspace is viewer. Ask an admin to change it. |
-| Tools don't appear | Restart your client after editing its config, and check the URL ends in `/mcp`. |
+| Tools don't appear | Restart your client after editing its config, and check the URL ends in `/mcp`. If the header shows a literal `${...}`, the client did not see `RUMPTY_API_KEY`; start it from a shell where the variable is set. |
+| A tool you expected is missing | The key's permissions don't cover it. Create a key with the permission the tool needs, such as `billing.read` for billing tools and `get_inference_usage`. |
