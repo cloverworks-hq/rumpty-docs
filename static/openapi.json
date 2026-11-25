@@ -497,6 +497,41 @@
           "referred_by_code": {
             "type": "string",
             "description": "The invite code used at signup. Omitted when you were not referred."
+          },
+          "api_key": {
+            "type": "object",
+            "description": "The API key that made this request, and what it may do. Each permission still has to be\ngranted by your role in the workspace you act on. Omitted when you are signed in through\nthe console.\n",
+            "required": [
+              "uid",
+              "name",
+              "permissions",
+              "expires_at"
+            ],
+            "properties": {
+              "uid": {
+                "type": "string",
+                "description": "The key's ID."
+              },
+              "name": {
+                "type": "string",
+                "description": "The key's name."
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The permissions this key carries. Keys created before permissions existed report the default set."
+              },
+              "expires_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When this key stops working (RFC 3339), or null if it never expires. Keys issued to connected apps expire an hour after they are issued or refreshed."
+              }
+            }
           }
         }
       },
@@ -4594,6 +4629,126 @@
             "type": "string",
             "description": "Human-readable summary of what was detected.",
             "example": "Next.js app detected. It needs a server, so we'll run it as a service."
+          },
+          "monorepo": {
+            "type": "boolean",
+            "description": "`true` when the app is a package of a shared JavaScript workspace and is built from the repository root. Omitted otherwise.",
+            "example": true
+          },
+          "workspace_manager": {
+            "type": "string",
+            "enum": [
+              "pnpm",
+              "yarn",
+              "npm",
+              "bun"
+            ],
+            "description": "Package manager of the workspace. Set with `monorepo`.",
+            "example": "pnpm"
+          },
+          "workspace_package": {
+            "type": "string",
+            "description": "Folder of the workspace package to deploy. Set with `monorepo`.",
+            "example": "apps/web"
+          },
+          "build_command": {
+            "type": "string",
+            "description": "Suggested build command. Set for workspace packages.",
+            "example": "pnpm --filter @acme/web build"
+          },
+          "start_command": {
+            "type": "string",
+            "description": "Suggested start command. Set for workspace packages that run a server.",
+            "example": "pnpm --filter @acme/web start"
+          },
+          "candidates": {
+            "type": "array",
+            "description": "Every app found, best first, each with the settings to deploy it. Omitted when there is only one.",
+            "items": {
+              "type": "object",
+              "required": [
+                "path",
+                "root_directory",
+                "supported_build_methods",
+                "message"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Folder the app lives in. Empty string for the root.",
+                  "example": "apps/api"
+                },
+                "root_directory": {
+                  "type": "string",
+                  "description": "Root directory to deploy it with.",
+                  "example": ""
+                },
+                "app_type": {
+                  "type": "string",
+                  "enum": [
+                    "static",
+                    "service"
+                  ],
+                  "example": "service"
+                },
+                "framework": {
+                  "type": "string",
+                  "example": "Node.js"
+                },
+                "recommended_build_method": {
+                  "type": "string",
+                  "enum": [
+                    "railpack",
+                    "dockerfile"
+                  ],
+                  "example": "railpack"
+                },
+                "supported_build_methods": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "railpack",
+                      "dockerfile"
+                    ]
+                  }
+                },
+                "dockerfile_path": {
+                  "type": "string",
+                  "example": "apps/api/Dockerfile"
+                },
+                "build_command": {
+                  "type": "string",
+                  "example": "pnpm --filter @acme/api build"
+                },
+                "start_command": {
+                  "type": "string",
+                  "example": "pnpm --filter @acme/api start"
+                },
+                "monorepo": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "workspace_manager": {
+                  "type": "string",
+                  "enum": [
+                    "pnpm",
+                    "yarn",
+                    "npm",
+                    "bun"
+                  ],
+                  "example": "pnpm"
+                },
+                "workspace_package": {
+                  "type": "string",
+                  "example": "apps/api"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Node.js app in apps/api, part of a pnpm workspace. We'll build it from the repository root so the workspace lockfile and shared packages are included."
+                }
+              }
+            }
           }
         }
       },
@@ -6621,6 +6776,10 @@
             "type": "integer",
             "format": "int64",
             "description": "The balance converted to `display_currency` minor units (cents or kobo), rounded. For display only."
+          },
+          "payments_sandbox": {
+            "type": "boolean",
+            "description": "`true` when payments run in a provider's sandbox, so top-ups move no real money. Always `false` in production."
           }
         }
       },
@@ -8487,7 +8646,19 @@
                       }
                     ],
                     "two_factor_enabled": true,
-                    "signed_up_via_referral": false
+                    "signed_up_via_referral": false,
+                    "api_key": {
+                      "uid": "0199c4d3-7a8b-7c9d-8e0f-1a2b3c4d5e6f",
+                      "name": "CI",
+                      "permissions": [
+                        "workspace.read",
+                        "resource.write",
+                        "runtime.connect",
+                        "secrets.read",
+                        "secrets.manage"
+                      ],
+                      "expires_at": "2027-03-04T09:12:44Z"
+                    }
                   }
                 }
               }
@@ -20365,7 +20536,7 @@
         "operationId": "detectGitHubAppRepository",
         "summary": "Detect a repository's app type",
         "x-slug": "detect-a-repositorys-app-type",
-        "description": "Inspects a repository branch's file list and suggests how to build and run it: whether it\nis a `static` site or a `service`, the framework, the root directory (for monorepos) and the\nrecommended build method. Only file names are inspected, not file contents.\n\nHow detection works:\n\n- The repository root and common app folders (`apps/web`, `frontend`, `web`, `api`,\n  `server`, `backend` and so on) are checked, along with every other folder. The best match\n  wins.\n- Framework config files are recognised first, for example Next.js, Nuxt, Remix and\n  SvelteKit (`service`), and Astro, Gatsby, Angular and Vite (`static`). Then Go, Rust,\n  Laravel, PHP, Rails, Ruby, Java, Elixir and Deno projects (`service`). Then generic\n  markers: `package.json`, `requirements.txt`, `pyproject.toml`, `index.php` and\n  `index.html`.\n- A `Dockerfile` in a folder makes `dockerfile` the recommended build method and sets\n  `dockerfile_path`. `railpack` is always supported.\n\nWhen nothing is recognised, `detected` is `false` and `recommended_build_method` is\nomitted.\n\nRequires the `secrets read` permission (owner, admin or developer role).\n",
+        "description": "Inspects a repository branch and suggests how to build and run it: whether it is a `static`\nsite or a `service`, the framework, the root directory and the recommended build method.\nThe file list is inspected, plus a few `package.json` files for their dependencies and\nworkspace settings.\n\nHow detection works:\n\n- The repository root wins when it holds an app. Other folders are checked only when the\n  root has no app of its own, or the root is a JavaScript workspace with nothing but\n  tooling. Folders such as `docs`, `examples`, `test`, `fixtures`, `scripts` and\n  `.devcontainer` are skipped.\n- Framework config files are recognised first, for example Next.js, Nuxt, Remix and\n  SvelteKit (`service`), and Astro, Gatsby, Angular and Vite (`static`). Then Go, Rust,\n  Laravel, PHP, Rails, Ruby, Java, Elixir and Deno projects (`service`). Then generic\n  markers: `package.json` (refined by its dependencies), `requirements.txt`,\n  `pyproject.toml`, `Pipfile`, `index.php` and `index.html`.\n- A `Dockerfile` in the chosen folder makes `dockerfile` the recommended build method and\n  sets `dockerfile_path`. `railpack` is always supported.\n- A package of a shared JavaScript workspace (`pnpm-workspace.yaml` or `workspaces` in the\n  root `package.json`, with the lockfile at the root) is built from the repository root:\n  `root_directory` is empty, `monorepo` is `true`, and `build_command` and `start_command`\n  target the package.\n- When there is more than one app, `candidates` lists them, best first, each with the\n  settings to deploy it. Ties are broken by common app folders (`apps/web`, `frontend`,\n  `api` and so on), then by depth, then by name.\n\nWhen nothing is recognised, `detected` is `false` and `recommended_build_method` is\nomitted.\n\nRequires the `secrets read` permission (owner, admin or developer role).\n",
         "tags": [
           "Git Connections"
         ],
@@ -20387,10 +20558,9 @@
             "name": "branch",
             "in": "query",
             "required": false,
-            "description": "Branch to inspect. Defaults to `main`.",
+            "description": "Branch to inspect. Defaults to the repository's default branch.",
             "schema": {
               "type": "string",
-              "default": "main",
               "example": "main"
             }
           }

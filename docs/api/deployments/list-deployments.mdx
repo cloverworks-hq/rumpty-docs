@@ -21,7 +21,7 @@ import {ApiPage, ApiMain, ApiAside, Endpoint, Param, ParamChildren, ResponseBloc
 Returns the workspace's deployments, newest first. Deleted deployments, pull request
 previews and the component deployments of one-click [apps](/api/apps/list-apps) are not
 included. Each item carries the status of its latest run in `last_run_status`, and
-`display_status` shows `updating` while a new version builds for a live app.
+`display_status` shows `updating` while a new version builds for a live app, and `starting` once that build has an image.
 
 Without query parameters, every deployment is returned in `data`. Send `page` or
 `page_size` to paginate. A top-level `pagination` object is then added next to `data`, and
@@ -114,7 +114,7 @@ the account is active again), `deleted` after deletion. A deployment created wit
 
 <Param name={"display_status"} type={"string"}>
 
-Status to show to people. Same as `status`, except `updating` while a live deployment's latest run is queued or building. Only computed by list and get; elsewhere equal to `status`.
+Status to show to people. Same as `status`, except `updating` while a live deployment's next version is still building, and `starting` once that build has an image and the app is coming up. Only computed by list and get; elsewhere equal to `status`.
 
 </Param>
 

@@ -102,7 +102,7 @@ the account is active again), `deleted` after deletion. A deployment created wit
 
 <Param name={"display_status"} type={"string"}>
 
-Status to show to people. Same as `status`, except `updating` while a live deployment's latest run is queued or building. Only computed by list and get; elsewhere equal to `status`.
+Status to show to people. Same as `status`, except `updating` while a live deployment's next version is still building, and `starting` once that build has an image and the app is coming up. Only computed by list and get; elsewhere equal to `status`.
 
 </Param>
 
