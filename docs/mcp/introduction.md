@@ -24,10 +24,20 @@ Rumpty MCP lets AI agents manage your account. Connect Cursor, Claude Code, VS C
 |---|---|
 | **Server URL** | `https://mcp.rumptycloud.com/mcp` |
 | **Transport** | Streamable HTTP |
-| **Authentication** | `Authorization: Bearer <your API key>` |
+| **Authentication** | Sign in with your browser (OAuth), or `Authorization: Bearer <your API key>` |
 | **Price** | Free. You pay only for the resources an agent creates. |
 
-## Before you start
+## Sign in with your browser
+
+Clients that support MCP sign-in (OAuth), such as Claude, Cursor and VS Code, need only the server URL. Add `https://mcp.rumptycloud.com/mcp` as a remote server; the client opens RumptyCloud in your browser, where you choose what the agent may do and approve. There is no key to copy.
+
+- The approval screen shows the app's name and the address it will send you back to. Only approve if you started the connection and that address belongs to your app.
+- The connection appears under **Personal API keys** as `<app> (connected app)`. Revoke it there to disconnect the app.
+- Access tokens last an hour and the client refreshes them on its own. If an app stops using the connection, it lapses after 30 days.
+
+If your client can't sign in this way, use an API key instead. Don't do both: a client configured with an `Authorization` header sends that header and never offers browser sign-in.
+
+## Use an API key
 
 Create a personal API key under **Manage Profile → My profile → Personal API keys**. See [API keys](/settings/api-keys). Then put it in an environment variable so client configs can refer to it instead of holding the key:
 
@@ -38,7 +48,7 @@ export RUMPTY_API_KEY=rumpty_...
 The agent uses that key. In each workspace it can do only what the key's permissions and your role both allow, and the server only lists the tools the key's permissions cover. A key created in the console with the default permissions can manage resources and secrets, and cannot see billing, members or audit logs. A viewer still cannot change anything. Give the key a clear name such as `Cursor MCP` so you can spot it in [audit logs](/audit-logs/introduction), and revoke it to cut the agent off.
 
 :::tip
-With the [Rumpty CLI](/cli/introduction) v0.2.0 or later, `rumpty mcp` prints the server details and `rumpty mcp <client>` prints the setup below for one client. It never prints your key.
+With the [Rumpty CLI](/cli/introduction), `rumpty mcp <client>` prints the setup below for one client, and `rumpty mcp install <client>` writes it into the client's config file for you. Neither ever prints or saves your key. See [Connect an AI client](/cli/mcp).
 :::
 
 ## Connect your client
@@ -175,6 +185,24 @@ Any client that can reach a remote HTTP MCP server and send a custom header work
 Your API key can do everything its permissions and your role allow. Keep config files that contain it out of version control, and prefer the environment variable or secret input forms above.
 :::
 
+## Limit what the agent sees
+
+Add parameters to the server URL to give an agent less to work with. Fewer tools also means the agent picks the right one more often.
+
+| Parameter | Effect |
+|-----------|--------|
+| `workspace=<slug>` | Pins one workspace. Tools use it by default, refuse any other workspace, and hide what your role there can't do. |
+| `read_only=true` | Hides every tool that creates, changes or deletes something. |
+| `features=<groups>` | Lists only these tool groups, comma-separated: `account`, `deployments`, `vms`, `databases`, `storage`, `networking`, `billing`, `kubernetes`, `apps`, `inference`, `docs`. `whoami` and `list_workspaces` are always there. |
+
+For example, a read-only agent for one workspace's apps and databases:
+
+```text
+https://mcp.rumptycloud.com/mcp?workspace=acme&read_only=true&features=deployments,databases
+```
+
+Group names the server doesn't know are ignored. If none of the groups is known, or `read_only` or `workspace` is malformed, the server answers `400 Bad Request`, so a typo never quietly gives the agent every tool.
+
 ## Check that it works
 
 Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspaces` and lists them. Most other tools take a workspace slug, so agents usually start there.
@@ -189,7 +217,7 @@ Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspa
 
 ## Tools
 
-The server has 106 tools. It lists only those your key's permissions cover, so an agent never tries a tool the key can't use. A key with the default permissions doesn't see the billing tools, `get_inference_usage`, `list_audit_logs` or `list_workspace_members`: those need `billing.read`, `audit.read` and `members.manage`. The payment tools (`top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `redeem_promo_code`) never appear for an API key.
+The server has 108 tools. It lists only those your key's permissions cover, so an agent never tries a tool the key can't use. A key with the default permissions doesn't see the billing tools, `get_inference_usage`, `list_audit_logs` or `list_workspace_members`: those need `billing.read`, `audit.read` and `members.manage`. The payment tools (`top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `redeem_promo_code`) never appear for an API key.
 
 | Area | Tools |
 |------|-------|
@@ -210,6 +238,9 @@ The server has 106 tools. It lists only those your key's permissions cover, so a
 | **AI inference** | `list_inference_projects`, `get_inference_usage` |
 | **Billing** | `get_billing`, `list_invoices`, `list_wallet_transactions`, `list_wallet_ledger`, `list_payment_methods`, `top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `get_promotions`, `redeem_promo_code` |
 | **Support** | `list_support_tickets` |
+| **Docs** | `search_docs` |
+
+After a deploy, agents call `wait_for_deploy`. It waits for the build to finish and returns the app's URL, or the end of the build log if it failed. It waits up to 50 seconds per call and tells the agent to call again if the build is still running.
 
 ## Example prompts
 
@@ -224,7 +255,9 @@ The server has 106 tools. It lists only those your key's permissions cover, so a
 
 | Problem | Fix |
 |---------|-----|
-| `401 Unauthorized` | The key is wrong, expired or revoked. Create a new one and check the header reads `Bearer <key>`. |
+| `401 Unauthorized` | The key is wrong, expired or revoked. Create a new one and check the header reads `Bearer <key>`. With browser sign-in, reconnect the server in your client. |
+| `400 Bad Request` | A URL parameter is invalid, for example `features` lists no group the server knows. |
+| `429 Too Many Requests` | The agent is sending requests too fast. Clients retry after the time the server gives. |
 | The agent can read but not change things | Your role in that workspace is viewer. Ask an admin to change it. |
 | Tools don't appear | Restart your client after editing its config, and check the URL ends in `/mcp`. If the header shows a literal `${...}`, the client did not see `RUMPTY_API_KEY`; start it from a shell where the variable is set. |
 | A tool you expected is missing | The key's permissions don't cover it. Create a key with the permission the tool needs, such as `billing.read` for billing tools and `get_inference_usage`. |
