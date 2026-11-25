@@ -216,6 +216,42 @@ The invite code used at signup. Omitted when you were not referred.
 
 </Param>
 
+<Param name={"api_key"} type={"object"}>
+
+The API key that made this request, and what it may do. Each permission still has to be
+granted by your role in the workspace you act on. Omitted when you are signed in through
+the console.
+
+<ParamChildren label={"attributes"}>
+
+<Param name={"uid"} type={"string"} required>
+
+The key's ID.
+
+</Param>
+
+<Param name={"name"} type={"string"} required>
+
+The key's name.
+
+</Param>
+
+<Param name={"permissions"} type={"array of strings"} required>
+
+The permissions this key carries. Keys created before permissions existed report the default set.
+
+</Param>
+
+<Param name={"expires_at"} type={"string (date-time) | null"} required>
+
+When this key stops working (RFC 3339), or null if it never expires. Keys issued to connected apps expire an hour after they are issued or refreshed.
+
+</Param>
+
+</ParamChildren>
+
+</Param>
+
 </ParamChildren>
 
 </Param>
