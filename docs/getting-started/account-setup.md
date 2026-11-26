@@ -41,7 +41,7 @@ Usage draws down from your credit as resources run. See [Billing](/billing/intro
 
 SSH keys are injected into new virtual machines so you can open a shell without passwords.
 
-1. Go to Settings → SSH keys in your workspace sidebar
+1. Go to Manage Profile → My profile → SSH keys, with your workspace selected
 2. Enter a Key name (e.g. MacBook Pro)
 3. Paste your Public key and click Add key
 
