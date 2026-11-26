@@ -120,6 +120,18 @@ Requests that returned a 5xx status.
 
 </Param>
 
+<Param name={"client_errors_total"} type={"integer | null"}>
+
+Requests that returned a 4xx status. `null` when this figure could not be read.
+
+</Param>
+
+<Param name={"avg_latency_ms"} type={"number | null"}>
+
+Average time the app took to respond, in milliseconds. `0` when there were no requests, `null` when this figure could not be read.
+
+</Param>
+
 <Param name={"rx_bytes"} type={"integer"} required>
 
 Bytes received from clients.
@@ -247,6 +259,8 @@ result = response.json()
     "requests_total": 1520,
     "errors_total": 4,
     "error_rate": 0.0026315789,
+    "client_errors_total": 31,
+    "avg_latency_ms": 18.4,
     "rx_bytes": 1843200,
     "tx_bytes": 52428800,
     "points": [
