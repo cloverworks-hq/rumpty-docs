@@ -4038,6 +4038,21 @@
             "maximum": 1,
             "description": "`errors_total / requests_total`, from 0 to 1."
           },
+          "client_errors_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Requests that returned a 4xx status. `null` when this figure could not be read."
+          },
+          "avg_latency_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Average time the app took to respond, in milliseconds. `0` when there were no requests, `null` when this figure could not be read."
+          },
           "rx_bytes": {
             "type": "integer",
             "format": "int64",
@@ -6958,6 +6973,159 @@
           },
           "load_balancer": {
             "$ref": "#/components/schemas/LoadBalancer"
+          }
+        }
+      },
+      "LoadBalancerTraffic": {
+        "type": "object",
+        "required": [
+          "load_balancer_uid",
+          "available",
+          "range",
+          "step_seconds",
+          "requests_total",
+          "errors_total",
+          "client_errors_total",
+          "error_rate",
+          "avg_latency_ms",
+          "rx_bytes",
+          "tx_bytes",
+          "points"
+        ],
+        "properties": {
+          "load_balancer_uid": {
+            "type": "string",
+            "description": "UID of the load balancer."
+          },
+          "available": {
+            "type": "boolean",
+            "description": "`false` when traffic data could not be read. The other totals are then `0`."
+          },
+          "range": {
+            "type": "string",
+            "description": "The requested range.",
+            "example": "1h"
+          },
+          "step_seconds": {
+            "type": "integer",
+            "description": "Width of each bucket in `points`, in seconds.",
+            "example": 240
+          },
+          "requests_total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Requests served in the range."
+          },
+          "errors_total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Requests that returned a 5xx status."
+          },
+          "client_errors_total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Requests that returned a 4xx status. `null` when this figure could not be read."
+          },
+          "error_rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "`errors_total / requests_total`, from 0 to 1."
+          },
+          "avg_latency_ms": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Average time your VMs took to respond, in milliseconds. `0` when there were no requests, `null` when this figure could not be read."
+          },
+          "rx_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Bytes received from clients."
+          },
+          "tx_bytes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Bytes sent to clients."
+          },
+          "points": {
+            "type": "array",
+            "description": "Requests and errors per bucket, oldest first.",
+            "items": {
+              "type": "object",
+              "required": [
+                "timestamp",
+                "requests",
+                "errors"
+              ],
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "End of the bucket."
+                },
+                "requests": {
+                  "type": "number",
+                  "description": "Requests in the bucket."
+                },
+                "errors": {
+                  "type": "number",
+                  "description": "5xx responses in the bucket."
+                }
+              }
+            }
+          },
+          "unavailable_reason": {
+            "type": "string",
+            "description": "Why traffic data is unavailable. Only set when `available` is `false`."
+          }
+        }
+      },
+      "LoadBalancerHealth": {
+        "type": "object",
+        "required": [
+          "load_balancer_uid",
+          "status",
+          "healthy_targets",
+          "total_targets",
+          "checked_at"
+        ],
+        "properties": {
+          "load_balancer_uid": {
+            "type": "string",
+            "description": "UID of the load balancer."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "down",
+              "no_targets",
+              "unknown"
+            ],
+            "description": "Overall health."
+          },
+          "healthy_targets": {
+            "type": "integer",
+            "description": "Targets receiving traffic. A stopped VM never counts. `0` when `status` is `unknown` or `no_targets`."
+          },
+          "total_targets": {
+            "type": "integer",
+            "description": "Targets on the load balancer, including stopped VMs."
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the health data was read."
+          },
+          "unavailable_reason": {
+            "type": "string",
+            "description": "Why health data is unavailable. Only set when `status` is `unknown`."
           }
         }
       },
@@ -19396,6 +19564,8 @@
                     "requests_total": 1520,
                     "errors_total": 4,
                     "error_rate": 0.0026315789,
+                    "client_errors_total": 31,
+                    "avg_latency_ms": 18.4,
                     "rx_bytes": 1843200,
                     "tx_bytes": 52428800,
                     "points": [
@@ -27937,6 +28107,181 @@
           "403",
           "404",
           "409"
+        ]
+      }
+    },
+    "/v1/load-balancers/{uid}/traffic": {
+      "get": {
+        "operationId": "getLoadBalancerTraffic",
+        "summary": "Get load balancer traffic",
+        "x-slug": "get-load-balancer-traffic",
+        "description": "Returns HTTP traffic through the load balancer over the chosen range: requests and 5xx\nerrors per time bucket, totals, 4xx count, error rate, average response time from your\nVMs and bytes in and out. Figures are summed across all targets. Traffic history is kept\nfor 8 days, so `30d` shows at most the last 8 days.\n\nWhen traffic data cannot be read (not available in this environment, or the metrics\nbackend is temporarily down), the response is still `200` with `available: false` and a\nreason in `unavailable_reason`.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          },
+          {
+            "$ref": "#/components/parameters/DeploymentMetricsRange"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The traffic summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/LoadBalancerTraffic"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "message": "ok",
+                  "data": {
+                    "load_balancer_uid": "019a9c20-4d5e-7f60-8a1b-2c3d4e5f6a7b",
+                    "available": true,
+                    "range": "1h",
+                    "step_seconds": 240,
+                    "requests_total": 1520,
+                    "errors_total": 4,
+                    "client_errors_total": 31,
+                    "error_rate": 0.0026315789,
+                    "avg_latency_ms": 18.4,
+                    "rx_bytes": 1843200,
+                    "tx_bytes": 52428800,
+                    "points": [
+                      {
+                        "timestamp": "2026-11-26T15:24:00Z",
+                        "requests": 104,
+                        "errors": 0
+                      },
+                      {
+                        "timestamp": "2026-11-26T15:28:00Z",
+                        "requests": 121,
+                        "errors": 1
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`range` is not one of the allowed values.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "invalid metrics range",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-response-order": [
+          "200",
+          "400",
+          "401",
+          "403",
+          "404"
+        ]
+      }
+    },
+    "/v1/load-balancers/{uid}/health": {
+      "get": {
+        "operationId": "getLoadBalancerHealth",
+        "summary": "Get load balancer health",
+        "x-slug": "get-load-balancer-health",
+        "description": "Returns how many targets are passing health checks and receiving traffic right now. A\ntarget is out when it fails the active health check or is ejected after repeated errors.\nThe data is usually 15 to 45 seconds behind, depending on your health check settings;\n`checked_at` is when it was read. Cheap enough to poll every 10 seconds.\n\n`status` is `healthy` (all targets in), `degraded` (some out, including stopped VMs),\n`down` (none in; clients get `503`), `no_targets`, or `unknown` when health data cannot\nbe read; see `unavailable_reason`. For a few seconds after a target is added or the\ngateway restarts, a target can show as out until its first health check passes.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The current health.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/LoadBalancerHealth"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "message": "ok",
+                  "data": {
+                    "load_balancer_uid": "019a9c20-4d5e-7f60-8a1b-2c3d4e5f6a7b",
+                    "status": "degraded",
+                    "healthy_targets": 1,
+                    "total_targets": 2,
+                    "checked_at": "2026-11-26T15:30:12Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-response-order": [
+          "200",
+          "401",
+          "403",
+          "404"
         ]
       }
     },

@@ -386,6 +386,8 @@
           "api/load-balancers/get-a-load-balancer",
           "api/load-balancers/update-a-load-balancer",
           "api/load-balancers/delete-a-load-balancer",
+          "api/load-balancers/get-load-balancer-traffic",
+          "api/load-balancers/get-load-balancer-health",
           "api/load-balancers/add-load-balancer-targets",
           "api/load-balancers/remove-a-load-balancer-target"
         ]
