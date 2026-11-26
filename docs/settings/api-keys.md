@@ -59,6 +59,10 @@ The **Existing Keys** panel lists all active tokens:
 
 Click **Revoke** next to a key to immediately invalidate it. Any CLI or automation using that token will stop working.
 
+## Connected apps
+
+When you connect an AI assistant to the [Rumpty MCP](/mcp) by signing in with your browser, it gets a key named `<app> (connected app)` in this list. It works like any other key, with the permissions you approved, and its tokens refresh every hour. Revoke it to disconnect the assistant from all your workspaces.
+
 ## Using an API key
 
 API keys are used by the Rumpty CLI for authentication:

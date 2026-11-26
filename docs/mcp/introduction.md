@@ -203,6 +203,19 @@ https://mcp.rumptycloud.com/mcp?workspace=acme&read_only=true&features=deploymen
 
 Group names the server doesn't know are ignored. If none of the groups is known, or `read_only` or `workspace` is malformed, the server answers `400 Bad Request`, so a typo never quietly gives the agent every tool.
 
+## Command access
+
+`run_vm_command` and `run_database_query` are off in every workspace until a workspace owner or admin turns them on under **Settings → AI assistants → Run commands and queries**. Until then those tools return an error.
+
+With command access on, assistants can:
+
+- run one non-interactive shell command at a time on the workspace's VMs, as the VM's default user. Commands act on the real server and can change it.
+- run read-only SQL on PostgreSQL and MySQL databases and read-only Redis commands. Statements that write are refused.
+
+Commands stop after at most 60 seconds and queries after 15. Both are recorded in the [audit log](/audit-logs/introduction), and members still need developer access or higher.
+
+The setting blocks VM commands for every caller. For database queries it applies to assistants that signed in with the browser; a client set up with a personal API key can run read-only queries with the key's permissions whether the setting is on or off.
+
 ## Check that it works
 
 Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspaces` and lists them. Most other tools take a workspace slug, so agents usually start there.
@@ -211,6 +224,7 @@ Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspa
 
 - **Agents confirm first.** The server tells agents that creating, changing or deleting resources acts on real, billed infrastructure, and to confirm with you before doing so.
 - **Deletes need the name typed back.** Permanent deletes (deployments, VMs, volumes, snapshots, firewall policies, SSH keys) require the resource's name as confirmed by you.
+- **Commands are off until you turn them on.** `run_vm_command`, and `run_database_query` for browser sign-ins, need [command access](#command-access) in the workspace.
 - **Database access is read-only.** `run_database_query` runs one read-only SQL statement on PostgreSQL or MySQL, or one read-only Redis command.
 - **Payments stay with you.** Topping up the wallet, adding or removing cards, settling a balance and redeeming promo codes are not available to API keys, so an agent cannot start a payment.
 - **Everything is audited.** Every change the agent makes shows up in [audit logs](/audit-logs/introduction) under your name.

@@ -6,7 +6,7 @@ sidebar_label: SSH keys
 
 # SSH Keys
 
-SSH keys are injected into new virtual machines so you can open a shell without passwords. Keys are scoped to a workspace: manage them under **Settings → SSH keys** in the sidebar of the workspace they belong to. Adding and deleting keys requires a workspace role that can manage secrets.
+SSH keys are injected into new virtual machines so you can open a shell without passwords. Keys are scoped to a workspace: manage them under **Manage Profile → My profile → SSH keys** while the workspace they belong to is selected. Adding and deleting keys requires a workspace role that can manage secrets.
 
 ## Add an SSH key
 
