@@ -372,6 +372,23 @@
           "api/firewall-policies/attach-a-firewall-policy",
           "api/firewall-policies/detach-a-firewall-policy"
         ]
+      },
+      {
+        "type": "category",
+        "label": "Load Balancers",
+        "link": {
+          "type": "doc",
+          "id": "api/load-balancers/index"
+        },
+        "items": [
+          "api/load-balancers/list-load-balancers",
+          "api/load-balancers/create-a-load-balancer",
+          "api/load-balancers/get-a-load-balancer",
+          "api/load-balancers/update-a-load-balancer",
+          "api/load-balancers/delete-a-load-balancer",
+          "api/load-balancers/add-load-balancer-targets",
+          "api/load-balancers/remove-a-load-balancer-target"
+        ]
       }
     ]
   }

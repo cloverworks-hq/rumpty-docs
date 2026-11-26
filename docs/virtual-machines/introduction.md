@@ -37,7 +37,7 @@ Each workspace is a logical grouping for your resources. When you create a VM, i
 </figure>
 
 :::note Note
-VMs are not exposed over a public IP by default. Use `rumpty expose` when you want to share a service on a public URL.
+VMs are not exposed over a public IP by default. Use `rumpty expose` when you want to share a service on a public URL, or a [load balancer](/networking/load-balancers) to serve it from several VMs.
 :::
 
 ## Where to find your VMs
