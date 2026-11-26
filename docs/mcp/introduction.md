@@ -231,7 +231,7 @@ Ask your agent "Which RumptyCloud workspaces do I have?". It calls `list_workspa
 
 ## Tools
 
-The server has 108 tools. It lists only those your key's permissions cover, so an agent never tries a tool the key can't use. A key with the default permissions doesn't see the billing tools, `get_inference_usage`, `list_audit_logs` or `list_workspace_members`: those need `billing.read`, `audit.read` and `members.manage`. The payment tools (`top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `redeem_promo_code`) never appear for an API key.
+The server has 115 tools. It lists only those your key's permissions cover, so an agent never tries a tool the key can't use. A key with the default permissions doesn't see the billing tools, `get_inference_usage`, `list_audit_logs` or `list_workspace_members`: those need `billing.read`, `audit.read` and `members.manage`. The payment tools (`top_up_wallet`, `add_payment_card`, `remove_payment_card`, `settle_outstanding_balance`, `redeem_promo_code`) never appear for an API key.
 
 | Area | Tools |
 |------|-------|
@@ -246,6 +246,7 @@ The server has 108 tools. It lists only those your key's permissions cover, so a
 | **Volumes** | `list_volumes`, `create_volume`, `attach_volume`, `detach_volume`, `delete_volume` |
 | **Databases** | `list_databases`, `create_database`, `resize_database`, `delete_database`, `rotate_database_password`, `create_database_snapshot`, `restore_database_snapshot`, `delete_database_snapshot`, `list_database_tables`, `browse_database_table`, `run_database_query`, `list_redis_keys` |
 | **Buckets** | `list_buckets`, `create_bucket`, `delete_bucket`, `list_bucket_objects`, `get_object_download_url`, `delete_bucket_object`, `set_bucket_cors`, `list_bucket_access_keys`, `revoke_bucket_access_key` |
+| **Load balancers** | `list_load_balancers`, `get_load_balancer`, `create_load_balancer`, `update_load_balancer`, `delete_load_balancer`, `add_load_balancer_targets`, `remove_load_balancer_target` |
 | **Firewalls** | `list_firewall_policies`, `create_firewall_policy`, `update_firewall_policy`, `delete_firewall_policy`, `add_firewall_rule`, `update_firewall_rule`, `delete_firewall_rule`, `attach_firewall_policy`, `detach_firewall_policy` |
 | **SSH keys** | `list_ssh_keys`, `add_ssh_key`, `delete_ssh_key` |
 | **Kubernetes** | `list_kubernetes_clusters` |

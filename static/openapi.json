@@ -351,6 +351,24 @@
           "example": "019a9e10-7a8c-7d0e-9f1a-2b3c4d5e6f7a"
         }
       },
+      "LoadBalancerUid": {
+        "name": "uid",
+        "in": "path",
+        "required": true,
+        "description": "Load balancer UID.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "LoadBalancerIdempotencyKey": {
+        "name": "X-Idempotency",
+        "in": "header",
+        "required": false,
+        "description": "Optional unique key for this request, such as a UUID. Repeating a key for the same action\non the same load balancer returns the original operation with `200 OK` and\n`X-Idempotency-Replay: true`, and nothing new is queued. Reusing it for a different action\nor load balancer returns `409` with `action: idempotency_key_reused`.\n",
+        "schema": {
+          "type": "string"
+        }
+      },
       "InvoiceUid": {
         "name": "uid",
         "in": "path",
@@ -4850,7 +4868,7 @@
             "type": "integer",
             "format": "int64",
             "description": "Monthly price in cents of `currency`. `0` means a free plan.",
-            "example": 185
+            "example": 200
           },
           "hourly_price_cents": {
             "type": "integer",
@@ -4861,7 +4879,7 @@
           "hourly_price_micros": {
             "type": "integer",
             "format": "int64",
-            "description": "Hourly price in millionths of the currency unit (for example `2534` is $0.002534 an hour). `0` for free plans.",
+            "description": "Hourly price in millionths of the currency unit (for example `2739` is $0.002739 an hour). `0` for free plans.",
             "example": 0
           },
           "currency": {
@@ -6741,6 +6759,208 @@
           }
         }
       },
+      "LoadBalancerHealthCheckInput": {
+        "type": "object",
+        "description": "Active health check settings. Omitted fields keep their current or default values.",
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "enum": [
+              "http",
+              "tcp"
+            ],
+            "description": "`http` expects a 2xx response on `path`; `tcp` only opens a connection. Defaults to `http`, or `tcp` for `grpc` targets, which must use `tcp`."
+          },
+          "path": {
+            "type": "string",
+            "description": "Path for `http` checks. Must start with `/`. Defaults to `/`.",
+            "example": "/healthz"
+          },
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535,
+            "description": "Port to check. Defaults to `target_port`."
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "description": "Seconds between checks. Default 10."
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Seconds before a check fails. At most `interval_seconds`. Default 5."
+          },
+          "healthy_threshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Passing checks before a VM receives traffic. Default 3."
+          },
+          "unhealthy_threshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Failing checks before a VM is ejected. Default 3."
+          }
+        }
+      },
+      "LoadBalancer": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "failed",
+              "deleting"
+            ],
+            "description": "`pending` while a change is being applied."
+          },
+          "hostname": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "target_port": {
+            "type": "integer"
+          },
+          "target_protocol": {
+            "type": "string",
+            "enum": [
+              "http",
+              "grpc"
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vm_uid": {
+                  "type": "string"
+                },
+                "vm_name": {
+                  "type": "string"
+                },
+                "vm_status": {
+                  "type": "string",
+                  "description": "The VM's current status."
+                }
+              }
+            }
+          },
+          "health_check": {
+            "type": "object",
+            "properties": {
+              "protocol": {
+                "type": "string",
+                "enum": [
+                  "http",
+                  "tcp"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer"
+              },
+              "interval_seconds": {
+                "type": "integer"
+              },
+              "timeout_seconds": {
+                "type": "integer"
+              },
+              "healthy_threshold": {
+                "type": "integer"
+              },
+              "unhealthy_threshold": {
+                "type": "integer"
+              }
+            }
+          },
+          "sticky_sessions": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "cookie_name": {
+                "type": "string"
+              },
+              "ttl_seconds": {
+                "type": "integer"
+              }
+            }
+          },
+          "allowed_cidrs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operation_id": {
+            "type": "string",
+            "description": "The latest operation on this load balancer."
+          },
+          "last_failure": {
+            "type": "string",
+            "description": "Why the last change failed",
+            "when `status` is `failed`.": null
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LoadBalancerOperationResult": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ]
+          },
+          "events_url": {
+            "type": "string"
+          },
+          "is_replay": {
+            "type": "boolean"
+          },
+          "is_completed": {
+            "type": "boolean"
+          },
+          "load_balancer": {
+            "$ref": "#/components/schemas/LoadBalancer"
+          }
+        }
+      },
       "WalletSummary": {
         "type": "object",
         "required": [
@@ -8433,6 +8653,112 @@
           }
         }
       },
+      "LoadBalancerQueued": {
+        "description": "The change was queued.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LoadBalancerOperationResult"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": {
+              "success": true,
+              "message": "load balancer creation queued",
+              "data": {
+                "operation_id": "019a8f70-1b2c-7d3e-8f40-5a6b7c8d9e01",
+                "status": "queued",
+                "events_url": "/v1/operations/019a8f70-1b2c-7d3e-8f40-5a6b7c8d9e01/events",
+                "is_replay": false,
+                "is_completed": false,
+                "load_balancer": {
+                  "uid": "019a8f70-1a2b-7c3d-8e4f-90ab5d6e7f80",
+                  "name": "web",
+                  "slug": "web",
+                  "status": "pending",
+                  "hostname": "web-5d6e7f80.rumptycloud.app",
+                  "url": "https://web-5d6e7f80.rumptycloud.app",
+                  "target_port": 8080,
+                  "target_protocol": "http",
+                  "targets": [
+                    {
+                      "vm_uid": "019a8f2c-7d41-7b3e-9c55-4e2f1a6b8d90",
+                      "vm_name": "web-1",
+                      "vm_status": "running"
+                    }
+                  ],
+                  "health_check": {
+                    "protocol": "http",
+                    "path": "/healthz",
+                    "port": 8080,
+                    "interval_seconds": 10,
+                    "timeout_seconds": 5,
+                    "healthy_threshold": 3,
+                    "unhealthy_threshold": 3
+                  },
+                  "sticky_sessions": {
+                    "enabled": false,
+                    "cookie_name": "rumpty-lb",
+                    "ttl_seconds": 300
+                  },
+                  "allowed_cidrs": [],
+                  "operation_id": "019a8f70-1b2c-7d3e-8f40-5a6b7c8d9e01",
+                  "created_at": "2026-11-26T10:00:00Z",
+                  "updated_at": "2026-11-26T10:00:00Z"
+                }
+              }
+            }
+          }
+        }
+      },
+      "LoadBalancerReplay": {
+        "description": "Replay. The `X-Idempotency` key was already used for this action, so that operation is returned and nothing is queued. `load_balancer` is its current state, or absent once it has been deleted.",
+        "headers": {
+          "X-Idempotency-Replay": {
+            "description": "Always `true` on a replay.",
+            "schema": {
+              "type": "string",
+              "example": "true"
+            }
+          },
+          "X-Idempotency-Completed": {
+            "description": "`true` when the original operation has already finished.",
+            "schema": {
+              "type": "string",
+              "example": "true"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LoadBalancerOperationResult"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
       "BillingForbidden": {
         "description": "Your email address is not verified (`action: verify_email`), or your account is suspended for abuse (`action: account_suspended`).",
         "content": {
@@ -8489,7 +8815,8 @@
     {
       "label": "Networking",
       "tags": [
-        "Firewall Policies"
+        "Firewall Policies",
+        "Load Balancers"
       ]
     }
   ],
@@ -8568,6 +8895,11 @@
       "name": "Firewall Policies",
       "x-slug": "firewall-policies",
       "description": "Firewall policies control which traffic can reach your VMs, databases and deployments. A\npolicy is a named set of allow rules (protocol, port range and source CIDR). Attach a policy\nto a resource to enforce it. Policies belong to the workspace and can be attached to many\nresources.\n\nA resource with no policy attached is not filtered. Once one or more policies are attached,\nonly inbound traffic matching an allow rule of one of them is let through. Rules are\nallow-only: there are no deny rules.\n\nChanging rules or attachments queues a `firewall.apply` operation for every affected\nresource. Where a response includes an `operation_id`, you can follow it with\n[Get an operation](/api/operations/get-an-operation).\n"
+    },
+    {
+      "name": "Load Balancers",
+      "x-slug": "load-balancers",
+      "description": "A load balancer puts 1 to 10 of your VMs behind one HTTPS address,\n`https://<name>-<id>.<domain>`. Requests are spread across the VMs that pass the health\ncheck, round robin by default or pinned to one VM with a cookie when sticky sessions are on.\nHTTP and gRPC backends are supported. You can limit which client IPs may connect with\n`allowed_cidrs`.\n\nTargets must be your VMs in the same workspace. A workspace can have up to 10\nload balancers. Each one costs a flat $2 per month, billed hourly from creation until you\ndelete it. Billing pauses while the account is suspended for non-payment.\n\nEvery change is asynchronous. It returns `202 Accepted` with an `operation_id` and the load\nbalancer moves to `pending` until the change is live, then `ready` (or `failed` with\n`last_failure`). See [Get an operation](/api/operations/get-an-operation). While a change is\n`pending`, other changes return `409`. Deleting is always accepted: billing stops at once, and the\nrouting is removed as soon as the in-flight change finishes. Deleting a VM removes it\nfrom every load balancer automatically.\n"
     },
     {
       "name": "Billing",
@@ -20740,9 +21072,9 @@
                       "included_egress_gib": 50,
                       "network_ingress_mbit": 50,
                       "network_egress_mbit": 50,
-                      "monthly_price_cents": 185,
+                      "monthly_price_cents": 200,
                       "hourly_price_cents": 0,
-                      "hourly_price_micros": 2534,
+                      "hourly_price_micros": 2739,
                       "currency": "USD",
                       "available": true
                     }
@@ -27133,6 +27465,619 @@
           "401",
           "403",
           "404"
+        ]
+      }
+    },
+    "/v1/load-balancers": {
+      "get": {
+        "operationId": "listLoadBalancers",
+        "summary": "List load balancers",
+        "x-slug": "list-load-balancers",
+        "description": "Returns your load balancers in the workspace, newest first, each with its targets. This endpoint is not paginated.",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The workspace's load balancers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/LoadBalancer"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "message": "ok",
+                  "data": [
+                    {
+                      "uid": "019a8f70-1a2b-7c3d-8e4f-90ab5d6e7f80",
+                      "name": "web",
+                      "slug": "web",
+                      "status": "ready",
+                      "hostname": "web-5d6e7f80.rumptycloud.app",
+                      "url": "https://web-5d6e7f80.rumptycloud.app",
+                      "target_port": 8080,
+                      "target_protocol": "http",
+                      "targets": [
+                        {
+                          "vm_uid": "019a8f2c-7d41-7b3e-9c55-4e2f1a6b8d90",
+                          "vm_name": "web-1",
+                          "vm_status": "running"
+                        },
+                        {
+                          "vm_uid": "019a8f2d-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                          "vm_name": "web-2",
+                          "vm_status": "running"
+                        }
+                      ],
+                      "health_check": {
+                        "protocol": "http",
+                        "path": "/healthz",
+                        "port": 8080,
+                        "interval_seconds": 10,
+                        "timeout_seconds": 5,
+                        "healthy_threshold": 3,
+                        "unhealthy_threshold": 3
+                      },
+                      "sticky_sessions": {
+                        "enabled": false,
+                        "cookie_name": "rumpty-lb",
+                        "ttl_seconds": 300
+                      },
+                      "allowed_cidrs": [],
+                      "operation_id": "019a8f70-1b2c-7d3e-8f40-5a6b7c8d9e01",
+                      "created_at": "2026-11-26T10:00:00Z",
+                      "updated_at": "2026-11-26T10:01:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "x-response-order": [
+          "200",
+          "401",
+          "403"
+        ]
+      },
+      "post": {
+        "operationId": "createLoadBalancer",
+        "summary": "Create a load balancer",
+        "x-slug": "create-a-load-balancer",
+        "description": "Creates a load balancer in front of the given VMs. The hostname is derived from the name\nand a short random id, for example `web-5d6e7f80.rumptycloud.app`.\n\nDefaults: `target_protocol` `http`; health check `http` on `/` at the target port every 10\nseconds with a 5 second timeout, 3 passes to become healthy and 3 failures to be ejected;\nsticky sessions off (cookie `rumpty-lb`, 300 seconds when on); no IP restriction.\n\nSend an `X-Idempotency` key to make retries safe. The key is tied to the name.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerIdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "target_port",
+                  "vm_uids"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 40,
+                    "description": "Converted to a slug (lowercase letters, digits and hyphens) of at most 40 characters. Unique per workspace.",
+                    "example": "web"
+                  },
+                  "target_port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Port your app listens on inside each VM.",
+                    "example": 8080
+                  },
+                  "target_protocol": {
+                    "type": "string",
+                    "enum": [
+                      "http",
+                      "grpc"
+                    ],
+                    "default": "http",
+                    "description": "Backend protocol. Use `grpc` for gRPC (HTTP/2) services."
+                  },
+                  "vm_uids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "VMs to send traffic to. Duplicates are ignored.",
+                    "example": [
+                      "019a8f2c-7d41-7b3e-9c55-4e2f1a6b8d90"
+                    ]
+                  },
+                  "health_check": {
+                    "$ref": "#/components/schemas/LoadBalancerHealthCheckInput"
+                  },
+                  "sticky_sessions": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Pin each client to one VM with a `rumpty-lb` cookie."
+                  },
+                  "allowed_cidrs": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Only clients from these CIDR blocks may connect. Empty allows everyone.",
+                    "example": [
+                      "203.0.113.0/24"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "name": "web",
+                "target_port": 8080,
+                "vm_uids": [
+                  "019a8f2c-7d41-7b3e-9c55-4e2f1a6b8d90",
+                  "019a8f2d-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+                ],
+                "health_check": {
+                  "path": "/healthz"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoadBalancerReplay"
+          },
+          "202": {
+            "$ref": "#/components/responses/LoadBalancerQueued"
+          },
+          "400": {
+            "description": "Validation failed, for example `name is required`, `target_port must be between 1 and 65535`, `health_check.path must start with /`, or an invalid CIDR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "target_port must be between 1 and 65535",
+                  "code": 400
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Conflict: the name or hostname is taken, the workspace already has 10 load balancers, a\nVM is being deleted, or the `X-Idempotency` key was used\nfor a different operation (`action: idempotency_key_reused`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "a load balancer with this name already exists",
+                  "code": 409
+                }
+              }
+            }
+          }
+        },
+        "x-response-order": [
+          "202",
+          "200",
+          "400",
+          "401",
+          "402",
+          "403",
+          "404",
+          "409"
+        ]
+      }
+    },
+    "/v1/load-balancers/{uid}": {
+      "get": {
+        "operationId": "getLoadBalancer",
+        "summary": "Get a load balancer",
+        "x-slug": "get-a-load-balancer",
+        "description": "Returns one load balancer with its settings and targets. Each target shows the VM's current status.",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The load balancer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Envelope"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/LoadBalancer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-response-order": [
+          "200",
+          "401",
+          "403",
+          "404"
+        ]
+      },
+      "patch": {
+        "operationId": "updateLoadBalancer",
+        "summary": "Update a load balancer",
+        "x-slug": "update-a-load-balancer",
+        "description": "Changes any create field except the name. Omitted fields keep their values.\n`health_check` fields merge onto the current health check. `vm_uids` replaces the whole\ntarget list. Returns `409` while the load balancer is applying another change.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerIdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "target_port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Port your app listens on inside each VM."
+                  },
+                  "target_protocol": {
+                    "type": "string",
+                    "enum": [
+                      "http",
+                      "grpc"
+                    ],
+                    "description": "Backend protocol."
+                  },
+                  "vm_uids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the target list."
+                  },
+                  "health_check": {
+                    "$ref": "#/components/schemas/LoadBalancerHealthCheckInput"
+                  },
+                  "sticky_sessions": {
+                    "type": "boolean",
+                    "description": "Turn cookie-based sticky sessions on or off."
+                  },
+                  "allowed_cidrs": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the allow list. Send `[]` to allow everyone."
+                  }
+                }
+              },
+              "example": {
+                "sticky_sessions": true,
+                "allowed_cidrs": [
+                  "203.0.113.0/24"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoadBalancerReplay"
+          },
+          "202": {
+            "$ref": "#/components/responses/LoadBalancerQueued"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "x-response-order": [
+          "202",
+          "200",
+          "400",
+          "401",
+          "403",
+          "404",
+          "409"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteLoadBalancer",
+        "summary": "Delete a load balancer",
+        "x-slug": "delete-a-load-balancer",
+        "description": "Removes the load balancer and its routing. Billing stops as soon as the request is\naccepted. The load balancer shows `deleting` until the routing is gone, then disappears.\nDeleting a load balancer that is already being deleted returns its delete operation. If the\ndelete failed (`last_failure` is set while `deleting`), calling it again retries.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerIdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoadBalancerReplay"
+          },
+          "202": {
+            "$ref": "#/components/responses/LoadBalancerQueued"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "x-response-order": [
+          "202",
+          "200",
+          "401",
+          "403",
+          "404",
+          "409"
+        ]
+      }
+    },
+    "/v1/load-balancers/{uid}/targets": {
+      "post": {
+        "operationId": "addLoadBalancerTargets",
+        "summary": "Add load balancer targets",
+        "x-slug": "add-load-balancer-targets",
+        "description": "Adds VMs to the load balancer. VMs that are already targets are skipped; if all of them\nare, the request returns `409`. A load balancer can have at most 10 targets.\n",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerIdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "vm_uids"
+                ],
+                "properties": {
+                  "vm_uids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "VMs to add."
+                  }
+                }
+              },
+              "example": {
+                "vm_uids": [
+                  "019a8f2e-3c4d-7e5f-8a6b-7c8d9e0f1a2b"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoadBalancerReplay"
+          },
+          "202": {
+            "$ref": "#/components/responses/LoadBalancerQueued"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "x-response-order": [
+          "202",
+          "200",
+          "400",
+          "401",
+          "403",
+          "404",
+          "409"
+        ]
+      }
+    },
+    "/v1/load-balancers/{uid}/targets/{vm_uid}": {
+      "delete": {
+        "operationId": "removeLoadBalancerTarget",
+        "summary": "Remove a load balancer target",
+        "x-slug": "remove-a-load-balancer-target",
+        "description": "Stops sending traffic to one VM. The VM itself is not changed. Returns `404` when the VM is not a target.",
+        "tags": [
+          "Load Balancers"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceSlug"
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerUid"
+          },
+          {
+            "name": "vm_uid",
+            "in": "path",
+            "required": true,
+            "description": "UID of the VM to remove.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/LoadBalancerIdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/LoadBalancerReplay"
+          },
+          "202": {
+            "$ref": "#/components/responses/LoadBalancerQueued"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "x-response-order": [
+          "202",
+          "200",
+          "401",
+          "403",
+          "404",
+          "409"
         ]
       }
     },

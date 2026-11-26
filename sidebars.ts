@@ -113,6 +113,7 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       items: [
         'networking/private-networking',
+        'networking/load-balancers',
         {
           type: 'category',
           label: 'Firewall Policies',
