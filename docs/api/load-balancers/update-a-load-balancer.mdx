@@ -79,7 +79,7 @@ Active health check settings. Omitted fields keep their current or default value
 
 <Param name={"protocol"} type={"string"} enumValues={["http","tcp"]}>
 
-`http` expects a 2xx response on `path`; `tcp` only opens a connection. Defaults to `http`, or `tcp` for `grpc` targets, which must use `tcp`.
+`http` passes on any 2xx or 3xx response from `path`; `tcp` only opens a connection. Defaults to `http`, or `tcp` for `grpc` targets, which must use `tcp`.
 
 </Param>
 

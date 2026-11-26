@@ -25,6 +25,7 @@ RumptyCloud is a cloud platform for developers and everyone. Run virtual machine
 | Buckets | S3-compatible object storage with public or private visibility |
 | Snapshots | Point-in-time VM snapshots you can restore into new VMs |
 | Databases | Managed Postgres, Redis, and MySQL with internal and public connection endpoints |
+| Load Balancers | One HTTPS address in front of 1 to 10 VMs, with health checks, sticky sessions and IP allow rules |
 | Firewall Policies | Workspace-scoped network rules: default inbound deny with per-port allow rules |
 
 ## How it's organised

@@ -145,6 +145,7 @@ const sidebars: SidebarsConfig = {
             'cli/copy',
             'cli/exec',
             'cli/vm',
+            'cli/load-balancer',
             'cli/expose',
             'cli/sync',
             'cli/mcp',

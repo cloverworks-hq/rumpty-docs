@@ -81,6 +81,7 @@ These flags work with any command:
 | [`expose`](./expose) | Expose a VM service with a public URL |
 | [`unexpose`](./expose#remove-an-exposed-service) | Remove a VM service public URL |
 | [`vm`](./vm) | Manage workspace VMs: `ls`, `start`, `stop`, `reboot`, `delete`, `expose ls` |
+| [`load-balancer`](./load-balancer) (aliases `lb`, `load-balancers`) | Manage load balancers: `ls`, `get`, `create`, `update`, `add-target`, `remove-target`, `delete` |
 | [`workspaces`](./workspaces) | List workspaces you can access |
 | [`mcp`](./mcp) | Show how to connect an AI client to Rumpty MCP |
 | `completion` | Generate shell autocompletion script |

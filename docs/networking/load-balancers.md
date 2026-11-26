@@ -58,21 +58,34 @@ The load balancer shows **Pending** while it is being set up and **Ready** once 
 
 From the detail page you can add or remove VMs, change the port, protocol, health check, sticky sessions and allowed IP ranges, and delete the load balancer. Each change shows **Pending** until it is live. You can't start another change while one is pending, but you can always delete. A deleted load balancer shows **Deleting** until its address is removed.
 
+## Add or remove VMs
+
+A new load balancer, or one whose VMs were all removed or deleted, answers every request with a short page saying it has no VMs yet (HTTP 503). Nothing is broken: add a VM and traffic starts reaching it once it passes its [health check](#health-checks), about 30 seconds with the default settings.
+
+**In the console:** open **Networking & Security → Load Balancers**, click the load balancer, and in the **Targets** card click **Add VMs**, choose up to 10 VMs and confirm. To take a VM out, click **Remove target** next to it.
+
+**With the CLI:**
+
+```bash
+rumpty lb add-target web web-1 web-2
+rumpty lb remove-target web web-2
+```
+
+The VMs must be in the same workspace and running your app on the load balancer's port. Check their [firewall policies](#firewall-policies-on-the-vms) allow that port.
+
 ## Use the CLI
 
-The [Rumpty CLI](/cli/introduction) manages load balancers with `rumpty lb` (or the long form `rumpty load-balancer`):
+The [Rumpty CLI](/cli/introduction) manages load balancers with `rumpty load-balancer`, or `rumpty lb` for short:
 
-| Command | What it does |
-|---|---|
-| `rumpty lb ls` | List the workspace's load balancers |
-| `rumpty lb get` | Show one load balancer, its settings and its VMs |
-| `rumpty lb create` | Create a load balancer |
-| `rumpty lb update` | Change its settings |
-| `rumpty lb add-target` | Add VMs |
-| `rumpty lb remove-target` | Remove a VM |
-| `rumpty lb rm` | Delete it |
+```bash
+rumpty lb create web --vm web-1 --vm web-2 --port 8080 --health-path /healthz
+rumpty lb ls
+rumpty lb add-target web web-3
+rumpty lb update web --sticky --allow 203.0.113.0/24
+rumpty lb delete web
+```
 
-Run `rumpty lb <command> --help` for the flags each command takes. Like other commands, they use the workspace from `--ws` or `$RUMPTY_WORKSPACE`.
+See [Manage Load Balancers](/cli/load-balancer) for every command and flag.
 
 ## Use an AI agent
 
@@ -139,7 +152,7 @@ New firewall policies already allow port `8080`.
 
 ## Deleting VMs and load balancers
 
-- **Deleting a VM** removes it from every load balancer it belongs to. The other VMs keep serving.
+- **Deleting a VM** removes it from every load balancer it belongs to. The other VMs keep serving. A load balancer left with no VMs stays up and answers with a short "No VMs behind this load balancer yet" page and HTTP `503` until you [add one](#add-or-remove-vms).
 - **Stopping a VM** keeps it on the load balancer, but it fails its health check and gets no traffic until it is running again.
 - **Removing a VM** from a load balancer doesn't change the VM.
 - **Deleting a load balancer** removes its address. Your VMs are not touched.
@@ -167,7 +180,7 @@ Each load balancer costs **$2 per month**, billed hourly from when you create it
 | Symptom | What to check |
 |---|---|
 | The address returns `503` | No VM is passing the health check. Check that the VMs are running, the app listens on `0.0.0.0` on the target port, the health check path returns `2xx` or `3xx`, and any attached firewall policy allows the port. |
-| The address returns `500` right after removing VMs | The load balancer has no VMs left. Add one. |
+| The address shows "No VMs behind this load balancer yet" with `503` | The load balancer has no VMs, for example after you removed or deleted them all. [Add one](#add-or-remove-vms). |
 | One VM never gets traffic | It is failing the health check. SSH in and run `curl -i http://localhost:<port><path>`, then check the VM's firewall policy. |
 | A gRPC load balancer reports VMs healthy but calls fail | The TCP check only confirms the port is open. Check that the load balancer's protocol is **gRPC**, not **HTTP**, and that the gRPC server on the VM doesn't use TLS: the load balancer connects with cleartext HTTP/2. |
 | `403 Forbidden` from the load balancer | Your IP isn't in the allowed IP ranges. |

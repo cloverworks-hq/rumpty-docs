@@ -6769,7 +6769,7 @@
               "http",
               "tcp"
             ],
-            "description": "`http` expects a 2xx response on `path`; `tcp` only opens a connection. Defaults to `http`, or `tcp` for `grpc` targets, which must use `tcp`."
+            "description": "`http` passes on any 2xx or 3xx response from `path`; `tcp` only opens a connection. Defaults to `http`, or `tcp` for `grpc` targets, which must use `tcp`."
           },
           "path": {
             "type": "string",
