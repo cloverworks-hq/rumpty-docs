@@ -5,6 +5,14 @@ import type {LoadedContent} from '@docusaurus/plugin-content-docs';
 
 type Page = {title: string; description: string; permalink: string; markdown: string};
 
+type LinkContext = {
+  permalink: string;
+  sourcePath: string;
+  routes: Set<string>;
+  sources: Map<string, string>;
+  siteUrl: string;
+};
+
 const SECTION_TITLES: Record<string, string> = {
   'getting-started': 'Getting started',
   api: 'API reference',
@@ -37,7 +45,7 @@ function attrs(tag: string): Record<string, string | true> {
 
 function convertTag(line: string): string | null {
   const tag = line.trim();
-  if (/^<\/(ApiPage|ApiMain|ApiAside|Tabs|ParamChildren|Param|ResponseBlock|TabItem)>$/.test(tag)) return '';
+  if (/^<\/(ApiPage|ApiMain|ApiAside|Tabs|ParamChildren|ResponseBlock|TabItem)>$/.test(tag)) return '';
   const open = tag.match(/^<([A-Z][A-Za-z]*)\b([^>]*?)\/?>$/);
   if (!open) return null;
   const [, name, rest] = open;
@@ -51,12 +59,6 @@ function convertTag(line: string): string | null {
       return '';
     case 'Endpoint':
       return `\`${a.method} ${a.path}\``;
-    case 'Param': {
-      const details = [a.type && `\`${a.type}\``, a.required === true && 'required', a.enumValues && `one of: ${a.enumValues}`]
-        .filter(Boolean)
-        .join(', ');
-      return `- **\`${a.name}\`**${details ? ` (${details})` : ''}`;
-    }
     case 'ResponseBlock':
       return `**${a.status}**`;
     case 'TabItem':
@@ -66,14 +68,39 @@ function convertTag(line: string): string | null {
   }
 }
 
-function rewriteLinks(text: string, permalink: string, routes: Set<string>, siteUrl: string): string {
+function paramLine(tag: string, indent: string): string {
+  const a = attrs(tag);
+  const details = [
+    a.type && `\`${a.type}\``,
+    a.required === true && 'required',
+    a.enumValues && `one of: ${a.enumValues}`,
+    a.defaultValue !== undefined && a.defaultValue !== true && `default: \`${a.defaultValue}\``,
+    a.constraints && a.constraints !== true && a.constraints,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return `${indent}- **\`${a.name}\`**${details ? ` (${details})` : ''}`;
+}
+
+function resolveRoute(target: string, ctx: LinkContext): string | undefined {
+  if (/\.mdx?$/.test(target)) {
+    const file = target.startsWith('/')
+      ? path.posix.join('docs', target)
+      : path.posix.join(path.posix.dirname(ctx.sourcePath), target);
+    return ctx.sources.get(path.posix.normalize(file));
+  }
+  const resolved = new URL(target, `https://x${ctx.permalink.replace(/\/+$/, '') || '/'}`).pathname;
+  const route = resolved.replace(/\/+$/, '') || '/';
+  return ctx.routes.has(route) ? route : undefined;
+}
+
+function rewriteLinks(text: string, ctx: LinkContext): string {
   return text.replace(/\]\(([^)\s]+)\)/g, (match, target: string) => {
     if (/^[a-z]+:/i.test(target) || target.startsWith('#')) return match;
     const [pathPart, hash = ''] = target.split('#');
-    const resolved = new URL(pathPart, `https://x${permalink.endsWith('/') ? permalink : `${permalink}/`}`).pathname;
-    const route = resolved.replace(/\/+$/, '') || '/';
-    if (!routes.has(route)) return match;
-    return `](${siteUrl}${markdownPath(route)}${hash ? `#${hash}` : ''})`;
+    const route = resolveRoute(pathPart, ctx);
+    if (!route) return match;
+    return `](${ctx.siteUrl}${markdownPath(route)}${hash ? `#${hash}` : ''})`;
   });
 }
 
@@ -108,13 +135,17 @@ export function htmlBlockToMarkdown(html: string): string {
     .join('\n');
 }
 
-export function toMarkdown(raw: string, page: {title: string; permalink: string}, routes: Set<string>, siteUrl: string): string {
+export function toMarkdown(raw: string, title: string, ctx: LinkContext): string {
   const body = raw.replace(/^---[\s\S]*?\n---\s*\n/, '');
   const out: string[] = [];
   const lines = body.split('\n');
   let inFence = false;
   let inAdmonition = false;
-  const push = (text: string) => out.push(inAdmonition && text.trim() ? `> ${text}` : inAdmonition ? '>' : text);
+  let openParams = 0;
+  const push = (line: string) => {
+    const text = openParams && line.trim() ? `${'  '.repeat(openParams)}${line}` : line;
+    out.push(inAdmonition && text.trim() ? `> ${text}` : inAdmonition ? '>' : text);
+  };
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (/^\s*(```|~~~)/.test(line)) {
@@ -128,6 +159,16 @@ export function toMarkdown(raw: string, page: {title: string; permalink: string}
     }
     if (/^(import|export)\s/.test(line)) continue;
     let text = line.replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
+    const param = text.trim().match(/^<Param\b([^>]*?)(\/?)>$/);
+    if (param) {
+      out.push(paramLine(param[1], '  '.repeat(openParams)));
+      if (!param[2]) openParams++;
+      continue;
+    }
+    if (text.trim() === '</Param>') {
+      openParams = Math.max(0, openParams - 1);
+      continue;
+    }
     const converted = convertTag(text);
     if (converted !== null) {
       push(converted);
@@ -136,14 +177,14 @@ export function toMarkdown(raw: string, page: {title: string; permalink: string}
     if (/^\s*<\/?[a-z][a-z0-9]*\b/.test(text)) {
       const block = [text];
       while (i + 1 < lines.length && lines[i + 1].trim() !== '') block.push(lines[++i]);
-      for (const l of htmlBlockToMarkdown(block.join('\n')).split('\n')) push(rewriteLinks(l, page.permalink, routes, siteUrl));
+      for (const l of htmlBlockToMarkdown(block.join('\n')).split('\n')) push(rewriteLinks(l, ctx));
       continue;
     }
     text = text.replace(/<MethodBadge method=\{"([A-Z]+)"\}\s*\/>/g, '`$1`');
-    const admonition = text.match(/^:::(note|tip|info|warning|danger|caution)\b\s*(.*)$/);
+    const admonition = text.match(/^:::(note|tip|info|warning|danger|caution)\b(?:\[([^\]]*)\])?\s*(.*)$/);
     if (admonition) {
       const label = admonition[1][0].toUpperCase() + admonition[1].slice(1);
-      const title = admonition[2].trim();
+      const title = (admonition[2] ?? admonition[3]).trim();
       out.push(`> **${title && title.toLowerCase() !== label.toLowerCase() ? title : label}:**`);
       inAdmonition = true;
       continue;
@@ -152,10 +193,10 @@ export function toMarkdown(raw: string, page: {title: string; permalink: string}
       inAdmonition = false;
       continue;
     }
-    push(rewriteLinks(text, page.permalink, routes, siteUrl));
+    push(rewriteLinks(text, ctx));
   }
   const content = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-  const heading = /^#\s/m.test(content) ? '' : `# ${page.title}\n\n`;
+  const heading = /^#\s/m.test(content) ? '' : `# ${title}\n\n`;
   return `${heading}${content}\n`;
 }
 
@@ -177,14 +218,18 @@ export default function llms(context: LoadContext): Plugin {
     async allContentLoaded({allContent}) {
       const content = allContent['docusaurus-plugin-content-docs']?.default as LoadedContent | undefined;
       const docs = (content?.loadedVersions[0]?.docs ?? []).filter(doc => !doc.draft && !doc.unlisted);
-      const routes = new Set(docs.map(doc => doc.permalink.replace(/\/+$/, '') || '/'));
+      const routeOf = (permalink: string) => permalink.replace(/\/+$/, '') || '/';
+      const routes = new Set(docs.map(doc => routeOf(doc.permalink)));
+      const sources = new Map(docs.map(doc => [doc.source.replace(/^@site\//, ''), routeOf(doc.permalink)]));
       const pages = await Promise.all(docs.map(async doc => {
-        const raw = await readFile(path.resolve(context.siteDir, doc.source.replace(/^@site\//, '')), 'utf8');
+        const sourcePath = doc.source.replace(/^@site\//, '');
+        const raw = await readFile(path.resolve(context.siteDir, sourcePath), 'utf8');
+        const eyebrow = raw.match(/<p className="eyebrow">([\s\S]*?)<\/p>/)?.[1]?.trim();
         return {
           title: doc.title,
-          description: doc.description,
+          description: eyebrow && doc.description.trim() === eyebrow ? '' : doc.description,
           permalink: doc.permalink,
-          markdown: toMarkdown(raw, doc, routes, siteUrl),
+          markdown: toMarkdown(raw, doc.title, {permalink: doc.permalink, sourcePath, routes, sources, siteUrl}),
         };
       }));
       loaded = pages;
