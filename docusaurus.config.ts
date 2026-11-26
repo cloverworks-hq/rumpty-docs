@@ -1,5 +1,6 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import docsSearch from './plugins/docs-search';
+import llms from './plugins/llms';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
@@ -18,7 +19,7 @@ const config: Config = {
 
   i18n: { defaultLocale: 'en', locales: ['en'] },
 
-  plugins: [docsSearch],
+  plugins: [docsSearch, llms],
   clientModules: ['./src/clientModules/docChrome.ts'],
 
   headTags: [
