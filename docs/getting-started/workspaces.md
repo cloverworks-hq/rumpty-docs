@@ -9,7 +9,7 @@ eyebrow: Get started
 
 # Workspaces
 
-A workspace is the top-level container for all your resources: VMs, deployments, Kubernetes clusters, volumes, buckets, databases, and firewall policies all live inside a workspace.
+A workspace is the top-level container for all your resources: VMs, deployments, Kubernetes clusters, volumes, buckets, databases, load balancers, and firewall policies all live inside a workspace.
 
 Use workspaces to separate products, environments, client projects, or experiments without mixing resources and access.
 
