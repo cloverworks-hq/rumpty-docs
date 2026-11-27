@@ -48,7 +48,7 @@ rumpty lb get web
 rumpty lb get web -o json
 ```
 
-`ls` shows each load balancer's name, status, protocol, port, targets and URL. `get` adds the live health (how many targets are taking traffic right now), the health check, sticky sessions, allowed IPs, the last failure if there is one, and a table of targets with each VM's status. The JSON output of `get` doesn't include health; use `rumpty lb traffic -o json` for that.
+`ls` shows each load balancer's name, status, protocol, port, targets and URL. `get` adds the live health (how many targets are taking traffic right now), the health check, sticky sessions, allowed IPs, the last failure if there is one, and a table of targets with each VM's health and status. The JSON output of `get` doesn't include health; use `rumpty lb traffic -o json` for that.
 
 | Flag | Description |
 |------|-------------|
@@ -65,6 +65,8 @@ rumpty lb traffic web -o json
 ```
 Load balancer:   web
 Health:          degraded (1/2 targets healthy)
+  web-1          healthy
+  web-2          unhealthy (failing health checks or returning errors)
 
 Traffic (1h)
   ▂▃▅▇█▆▅▃▂▃▅▆▇
@@ -75,7 +77,7 @@ Traffic (1h)
   Bandwidth:     1.8 MB in, 50.0 MB out
 ```
 
-Health is one of `healthy`, `degraded` (some targets out), `down` (no target is passing its health check, so visitors get a 503 page), `no targets`, or `unknown` when it can't be read right now. It is usually 15 to 45 seconds behind, depending on your health check settings.
+Health is one of `healthy`, `degraded` (some targets out), `down` (no target is passing its health check, so visitors get a 503 page), `no targets`, or `unknown` when it can't be read right now. Below it, each target is `healthy`, `unhealthy`, `starting` or `stopped`, with the reason. It is usually 15 to 45 seconds behind, depending on your health check settings.
 
 | Flag | Description |
 |------|-------------|

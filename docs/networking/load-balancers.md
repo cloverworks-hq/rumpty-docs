@@ -100,12 +100,15 @@ See the [Load Balancers API reference](/api/load-balancers). Changes are asynchr
 The load balancer's page in the console shows:
 
 - **Health**, updated every 10 seconds: how many targets are taking traffic, for example "1 of 3 targets healthy". When none are, visitors get the 503 page, and the console says so.
-- **Traffic flow**: a diagram from the internet, through your allowed IP ranges, to the load balancer and each VM. A stopped VM is drawn with a dashed red line. Health is measured for the load balancer as a whole, so when only some targets are healthy and more than one VM is running, those VMs show as "may be failing" rather than naming which one.
+- **Health of each VM** in the targets table: **Healthy**, **Unhealthy** (failing the health check or returning repeated errors, so it gets no traffic), **Starting** or **Stopped**, with the reason.
+- **Traffic flow**: a diagram from the internet, through your allowed IP ranges, to the load balancer and each VM, coloured by each VM's health. A VM that gets no traffic is drawn with a dashed red line.
 - **Requests** over the last hour, 6 hours, day or week: request count, error rate, average response time and bandwidth.
 
 Health is usually 15 to 45 seconds behind what the VMs are doing: the time your health check takes to mark a VM up or down (about 30 seconds with the defaults), plus up to 15 seconds to show it. The same data is available with [`rumpty lb traffic`](/cli/load-balancer#traffic-and-health) and from the [API](/api/load-balancers/get-load-balancer-health).
 
 ## Health checks
+
+One health check applies to every target, and each VM is checked on its own: a VM that fails stops getting traffic while the others keep serving. This is how most cloud load balancers work. If some VMs need a different check, put them behind a separate load balancer.
 
 The load balancer checks every VM on a schedule. A VM is taken out of rotation after it fails the check enough times in a row, and is put back automatically once it passes enough times in a row again.
 

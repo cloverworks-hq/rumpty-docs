@@ -7092,7 +7092,8 @@
           "status",
           "healthy_targets",
           "total_targets",
-          "checked_at"
+          "checked_at",
+          "targets"
         ],
         "properties": {
           "load_balancer_uid": {
@@ -7126,6 +7127,43 @@
           "unavailable_reason": {
             "type": "string",
             "description": "Why health data is unavailable. Only set when `status` is `unknown`."
+          },
+          "targets": {
+            "type": "array",
+            "description": "Health of each target VM. `healthy_targets` counts the `healthy` ones.",
+            "items": {
+              "type": "object",
+              "required": [
+                "vm_uid",
+                "vm_name",
+                "state"
+              ],
+              "properties": {
+                "vm_uid": {
+                  "type": "string",
+                  "description": "UID of the VM."
+                },
+                "vm_name": {
+                  "type": "string",
+                  "description": "Name of the VM."
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "healthy",
+                    "unhealthy",
+                    "starting",
+                    "stopped",
+                    "unknown"
+                  ],
+                  "description": "`healthy`: passing health checks and receiving traffic. `unhealthy`: failing health\nchecks or returning repeated errors, so it gets no traffic. `starting`: the VM is\nstarting. `stopped`: the VM is stopped or deleted. `unknown`: health could not be read.\n"
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why the target is not healthy."
+                }
+              }
+            }
           }
         }
       },
@@ -28221,7 +28259,7 @@
         "operationId": "getLoadBalancerHealth",
         "summary": "Get load balancer health",
         "x-slug": "get-load-balancer-health",
-        "description": "Returns how many targets are passing health checks and receiving traffic right now. A\ntarget is out when it fails the active health check or is ejected after repeated errors.\nThe data is usually 15 to 45 seconds behind, depending on your health check settings;\n`checked_at` is when it was read. Cheap enough to poll every 10 seconds.\n\n`status` is `healthy` (all targets in), `degraded` (some out, including stopped VMs),\n`down` (none in; clients get `503`), `no_targets`, or `unknown` when health data cannot\nbe read; see `unavailable_reason`. For a few seconds after a target is added or the\ngateway restarts, a target can show as out until its first health check passes.\n",
+        "description": "Returns which targets are passing health checks and receiving traffic right now, with a\nstate for each target VM. A target is out when it fails the active health check or is\nejected after repeated errors.\nThe data is usually 15 to 45 seconds behind, depending on your health check settings;\n`checked_at` is when it was read. Cheap enough to poll every 10 seconds.\n\n`status` is `healthy` (all targets in), `degraded` (some out, including stopped VMs),\n`down` (none in; clients get `503`), `no_targets`, or `unknown` when health data cannot\nbe read; see `unavailable_reason`. For a few seconds after a target is added or the\ngateway restarts, a target can show as out until its first health check passes.\n",
         "tags": [
           "Load Balancers"
         ],
@@ -28261,7 +28299,20 @@
                     "status": "degraded",
                     "healthy_targets": 1,
                     "total_targets": 2,
-                    "checked_at": "2026-11-26T15:30:12Z"
+                    "checked_at": "2026-11-26T15:30:12Z",
+                    "targets": [
+                      {
+                        "vm_uid": "019a9c21-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+                        "vm_name": "web-1",
+                        "state": "healthy"
+                      },
+                      {
+                        "vm_uid": "019a9c21-1b2c-7d3e-9f4a-5b6c7d8e9f0a",
+                        "vm_name": "web-2",
+                        "state": "unhealthy",
+                        "reason": "failing health checks or returning errors"
+                      }
+                    ]
                   }
                 }
               }

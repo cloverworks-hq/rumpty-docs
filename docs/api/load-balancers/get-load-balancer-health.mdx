@@ -1,7 +1,7 @@
 ---
 title: "Get load balancer health"
 sidebar_label: "Get load balancer health"
-description: "Returns how many targets are passing health checks and receiving traffic right now."
+description: "Returns which targets are passing health checks and receiving traffic right now, with a state for each target VM."
 sidebar_class_name: api-sidebar-item api-sidebar-item--get
 hide_table_of_contents: true
 custom_edit_url: null
@@ -18,8 +18,9 @@ import {ApiPage, ApiMain, ApiAside, Endpoint, Param, ParamChildren, ResponseBloc
 
 <Endpoint method={"GET"} path={"/v1/load-balancers/{uid}/health"} />
 
-Returns how many targets are passing health checks and receiving traffic right now. A
-target is out when it fails the active health check or is ejected after repeated errors.
+Returns which targets are passing health checks and receiving traffic right now, with a
+state for each target VM. A target is out when it fails the active health check or is
+ejected after repeated errors.
 The data is usually 15 to 45 seconds behind, depending on your health check settings;
 `checked_at` is when it was read. Cheap enough to poll every 10 seconds.
 
@@ -108,6 +109,42 @@ Why health data is unavailable. Only set when `status` is `unknown`.
 
 </Param>
 
+<Param name={"targets"} type={"array of objects"} required>
+
+Health of each target VM. `healthy_targets` counts the `healthy` ones.
+
+<ParamChildren label={"item attributes"}>
+
+<Param name={"vm_uid"} type={"string"} required>
+
+UID of the VM.
+
+</Param>
+
+<Param name={"vm_name"} type={"string"} required>
+
+Name of the VM.
+
+</Param>
+
+<Param name={"state"} type={"string"} required enumValues={["healthy","unhealthy","starting","stopped","unknown"]}>
+
+`healthy`: passing health checks and receiving traffic. `unhealthy`: failing health
+checks or returning repeated errors, so it gets no traffic. `starting`: the VM is
+starting. `stopped`: the VM is stopped or deleted. `unknown`: health could not be read.
+
+</Param>
+
+<Param name={"reason"} type={"string"}>
+
+Why the target is not healthy.
+
+</Param>
+
+</ParamChildren>
+
+</Param>
+
 </ParamChildren>
 
 </Param>
@@ -184,7 +221,20 @@ result = response.json()
     "status": "degraded",
     "healthy_targets": 1,
     "total_targets": 2,
-    "checked_at": "2026-11-26T15:30:12Z"
+    "checked_at": "2026-11-26T15:30:12Z",
+    "targets": [
+      {
+        "vm_uid": "019a9c21-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+        "vm_name": "web-1",
+        "state": "healthy"
+      },
+      {
+        "vm_uid": "019a9c21-1b2c-7d3e-9f4a-5b6c7d8e9f0a",
+        "vm_name": "web-2",
+        "state": "unhealthy",
+        "reason": "failing health checks or returning errors"
+      }
+    ]
   }
 }
 ```
