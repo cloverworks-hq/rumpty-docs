@@ -29,7 +29,8 @@ View: rumpty lb get web --ws my-workspace
 | Command | What it does |
 |---------|--------------|
 | `rumpty lb ls` (alias `list`) | List load balancers in the workspace |
-| `rumpty lb get <load-balancer>` | Show a load balancer's settings and targets |
+| `rumpty lb get <load-balancer>` | Show a load balancer's settings, health and targets |
+| `rumpty lb traffic <load-balancer>` | Show live health and request traffic |
 | `rumpty lb create <name> --vm <vm>... --port <port>` | Create a load balancer in front of your VMs |
 | `rumpty lb update <load-balancer>` | Change settings or replace the targets |
 | `rumpty lb add-target <load-balancer> <vm>...` | Send traffic to more VMs |
@@ -47,11 +48,39 @@ rumpty lb get web
 rumpty lb get web -o json
 ```
 
-`ls` shows each load balancer's name, status, protocol, port, targets and URL. `get` adds the health check, sticky sessions, allowed IPs, the last failure if there is one, and a table of targets with each VM's status.
+`ls` shows each load balancer's name, status, protocol, port, targets and URL. `get` adds the live health (how many targets are taking traffic right now), the health check, sticky sessions, allowed IPs, the last failure if there is one, and a table of targets with each VM's status. The JSON output of `get` doesn't include health; use `rumpty lb traffic -o json` for that.
 
 | Flag | Description |
 |------|-------------|
 | `-o`, `--output` | Output format: `table` (default) or `json` |
+
+## Traffic and health
+
+```bash
+rumpty lb traffic web
+rumpty lb traffic web --range 7d
+rumpty lb traffic web -o json
+```
+
+```
+Load balancer:   web
+Health:          degraded (1/2 targets healthy)
+
+Traffic (1h)
+  ▂▃▅▇█▆▅▃▂▃▅▆▇
+  Requests:      8.3k (138/min)
+  5xx errors:    30 (0.36%)
+  4xx:           41
+  Avg response:  23 ms
+  Bandwidth:     1.8 MB in, 50.0 MB out
+```
+
+Health is one of `healthy`, `degraded` (some targets out), `down` (no target is passing its health check, so visitors get a 503 page), `no targets`, or `unknown` when it can't be read right now. It is usually 15 to 45 seconds behind, depending on your health check settings.
+
+| Flag | Description |
+|------|-------------|
+| `--range` | Time range: `1h` (default), `6h`, `24h` or `7d` |
+| `-o`, `--output` | Output format: `table` (default) or `json`. JSON has a `health` and a `traffic` object |
 
 ## Create
 
