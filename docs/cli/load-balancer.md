@@ -65,8 +65,8 @@ rumpty lb traffic web -o json
 ```
 Load balancer:   web
 Health:          degraded (1/2 targets healthy)
-  web-1          healthy
-  web-2          unhealthy (failing health checks or returning errors)
+  web-1  healthy
+  web-2  unhealthy (failing health checks or returning errors)
 
 Traffic (1h)
   ▂▃▅▇█▆▅▃▂▃▅▆▇
