@@ -43,7 +43,7 @@ Each account can run up to 2 free Playground databases at a time, across all eng
 
 ## Step 4: Zone
 
-Choose where the database runs. For now, new databases default to `olascloset`. Your database will be provisioned in the selected zone with the resources included in the plan.
+Choose where the database runs. For now, new databases run in LOS1, our Lagos zone. Your database will be provisioned in the selected zone with the resources included in the plan.
 
 ## Step 5: Service basics
 
@@ -62,7 +62,7 @@ The right panel updates as you configure:
 | **Name** | `main-db` |
 | **Size** | Playground |
 | **Resources** | 1 CPU · 256 MB · 1 GB |
-| **Zone** | olascloset |
+| **Zone** | LOS1 (Lagos) |
 | **Endpoint** | Public database URL |
 
 **What you get:**

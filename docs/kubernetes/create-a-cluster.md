@@ -14,7 +14,7 @@ sidebar_label: Create a cluster
    - **Worker size**: pick a plan (CPU and RAM per worker node)
 5. Click **Create Cluster**
 
-The **Zone** is currently fixed to `olas-closet`, and the **control plane** runs on a fixed Pro plan (2 vCPU, 2 GB RAM). The **Estimated Cost** panel shows the monthly total for the control plane plus workers before you create the cluster.
+The **Zone** is currently fixed to LOS1 (Lagos), and the **control plane** runs on a fixed Pro plan (2 vCPU, 2 GB RAM). The **Estimated Cost** panel shows the monthly total for the control plane plus workers before you create the cluster.
 
 Provisioning progress is shown on the cluster page: setting up the control plane, setting up and joining worker nodes, installing the network overlay, and validating the cluster API.
 

@@ -15,7 +15,7 @@ To create a key, see [Access keys and SDK access](uploading.md#access-keys-and-s
 | Setting | Value |
 |---------|-------|
 | **Endpoint** | `https://s3.rumptycloud.com` |
-| **Region** | `olas-closet` |
+| **Region** | `olas-closet` (the S3 region name for our Lagos zone, LOS1; use it exactly as shown) |
 | **Addressing** | Path-style (`forcePathStyle: true`, `addressing_style: "path"`) |
 | **Bucket** | The S3 bucket name shown on the bucket's **Access keys** tab |
 
